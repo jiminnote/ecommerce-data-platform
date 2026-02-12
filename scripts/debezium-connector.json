@@ -1,0 +1,25 @@
+{
+  "name": "ecommerce-cdc-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "app",
+    "database.password": "localdev123",
+    "database.dbname": "ecommerce",
+    "topic.prefix": "cdc.ecommerce",
+    "table.include.list": "public.users,public.products,public.orders,public.order_items",
+    "publication.name": "cdc_publication",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_slot",
+    "snapshot.mode": "initial",
+    "transforms": "route",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "cdc\\.ecommerce\\.public\\.(.*)",
+    "transforms.route.replacement": "cdc.$1",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": false,
+    "value.converter.schemas.enable": false
+  }
+}

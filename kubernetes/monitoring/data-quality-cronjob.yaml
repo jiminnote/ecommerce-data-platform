@@ -1,0 +1,54 @@
+# Data Quality CronJob
+# Runs the GenAI Data Quality Agent every 30 minutes
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: data-quality-agent
+  namespace: data-platform
+  labels:
+    app: data-quality-agent
+    app.kubernetes.io/part-of: ecommerce-data-platform
+    app.kubernetes.io/component: genai
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: data-quality-agent
+        spec:
+          serviceAccountName: data-platform-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: quality-agent
+              image: gcr.io/PROJECT_ID/genai-agent:latest
+              command: ["python", "-m", "src.genai.data_quality_agent"]
+              envFrom:
+                - configMapRef:
+                    name: data-platform-config
+                - secretRef:
+                    name: data-platform-secrets
+              env:
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: /var/secrets/google/sa.json
+              resources:
+                requests:
+                  cpu: "250m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "1Gi"
+              volumeMounts:
+                - name: gcp-sa
+                  mountPath: /var/secrets/google
+                  readOnly: true
+          volumes:
+            - name: gcp-sa
+              secret:
+                secretName: gcp-sa-key

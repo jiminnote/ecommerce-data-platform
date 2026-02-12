@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-platform-config
+  namespace: data-platform
+  labels:
+    app.kubernetes.io/part-of: ecommerce-data-platform
+data:
+  GCP_PROJECT_ID: "your-gcp-project-id"
+  GCP_REGION: "asia-northeast3"
+  BQ_DATASET_RAW: "raw"
+  BQ_DATASET_STAGING: "staging"
+  BQ_DATASET_MART: "mart"
+  PUBSUB_TOPIC: "user-events"
+  PUBSUB_SUBSCRIPTION: "user-events-sub"
+  CDC_SUBSCRIPTION: "cdc-events-sub"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  OTEL_EXPORTER_ENDPOINT: "http://otel-collector.monitoring:4317"

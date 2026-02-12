@@ -1,0 +1,101 @@
+# Airflow on Kubernetes using official Helm chart values
+# This is a values override file for: helm install airflow apache-airflow/airflow
+#
+# Production deployment:
+#   helm repo add apache-airflow https://airflow.apache.org
+#   helm install airflow apache-airflow/airflow \
+#     -n data-platform \
+#     -f kubernetes/airflow/helm-values.yaml
+
+# Airflow configuration
+airflowVersion: "2.10.0"
+
+config:
+  core:
+    dags_folder: /opt/airflow/dags
+    executor: KubernetesExecutor
+    load_examples: "False"
+  kubernetes_executor:
+    namespace: data-platform
+    worker_container_repository: gcr.io/PROJECT_ID/airflow-worker
+    worker_container_tag: latest
+    delete_worker_pods: "True"
+    delete_worker_pods_on_failure: "False"
+  webserver:
+    expose_config: "False"
+    rbac: "True"
+
+# Web server
+webserver:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  service:
+    type: ClusterIP
+    ports:
+      - name: airflow-ui
+        port: 8080
+
+# Scheduler
+scheduler:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# Use KubernetesExecutor (no need for workers/celery)
+executor: KubernetesExecutor
+
+# PostgreSQL for Airflow metadata
+postgresql:
+  enabled: true
+  auth:
+    username: airflow
+    password: airflow
+    database: airflow
+
+# Redis not needed for KubernetesExecutor
+redis:
+  enabled: false
+
+# DAGs sync via git
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/your-org/ecommerce-data-platform.git
+    branch: main
+    subPath: dags
+    wait: 60
+
+# Extra environment variables
+extraEnv:
+  - name: GCP_PROJECT_ID
+    valueFrom:
+      configMapKeyRef:
+        name: data-platform-config
+        key: GCP_PROJECT_ID
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /var/secrets/google/sa.json
+
+extraVolumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-key
+
+extraVolumeMounts:
+  - name: gcp-sa
+    mountPath: /var/secrets/google
+    readOnly: true
+
+# Flower (monitoring) - optional
+flower:
+  enabled: false

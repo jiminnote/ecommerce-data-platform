@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdc-pipeline
+  namespace: data-platform
+  labels:
+    app: cdc-pipeline
+    app.kubernetes.io/name: cdc-pipeline
+    app.kubernetes.io/part-of: ecommerce-data-platform
+    app.kubernetes.io/component: pipeline
+spec:
+  # Only 1 replica for CDC to avoid duplicate processing
+  # Use leader election for HA if needed
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cdc-pipeline
+  template:
+    metadata:
+      labels:
+        app: cdc-pipeline
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: data-platform-sa
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: cdc-pipeline
+          image: gcr.io/PROJECT_ID/cdc-pipeline:latest
+          envFrom:
+            - configMapRef:
+                name: data-platform-config
+            - secretRef:
+                name: data-platform-secrets
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/sa.json
+            - name: CDC_BATCH_SIZE
+              value: "100"
+            - name: CDC_FLUSH_INTERVAL_SEC
+              value: "5"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          # Graceful shutdown: flush remaining buffer
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "kill -SIGTERM 1 && sleep 30"]
+          volumeMounts:
+            - name: gcp-sa
+              mountPath: /var/secrets/google
+              readOnly: true
+      volumes:
+        - name: gcp-sa
+          secret:
+            secretName: gcp-sa-key
+---
+# PodDisruptionBudget for CDC pipeline
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cdc-pipeline-pdb
+  namespace: data-platform
+spec:
+  minAvailable: 0
+  selector:
+    matchLabels:
+      app: cdc-pipeline
