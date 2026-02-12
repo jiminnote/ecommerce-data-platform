@@ -246,9 +246,9 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
 
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero" id="overview">
-  <div class="hero-badge"><span class="dot"></span> DataOps Portfolio 2024</div>
+  <div class="hero-badge"><span class="dot"></span> DataOps Portfolio </div>
   <h1>핀테크 DataOps:<br><span class="accent">신뢰할 수 있는 데이터 환경 구축</span></h1>
-  <p class="hero-sub">"데이터를 만드는 것이 아니라, <strong>데이터를 신뢰할 수 있게 만드는 것</strong>이 DataOps의 본질입니다."<br>QuickPay — 가상의 간편결제 서비스를 위한 데이터 운영 포트폴리오</p>
+ <p class="hero-sub" style="font-size: 1.1rem; color: #666; line-height: 1.6;"> "단순한 파이프라인 구축을 넘어, <strong>데이터의 정합성과 운영 가시성(Observability)</strong>을 확보하여 핀테크 서비스의 의사결정 비용을 최소화하는 DataOps 체계를 지향합니다." </p>
   <div class="hero-stats">
     <div class="hero-stat"><div class="num">5</div><div class="label">Part Portfolio</div></div>
     <div class="hero-stat"><div class="num">18+</div><div class="label">Quality Rules</div></div>
@@ -262,17 +262,17 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
 <section class="section">
   <div class="section-header">
     <div class="section-label">📌 Project Overview</div>
-    <h2 class="section-title">프로젝트 개요</h2>
-    <p class="section-desc">PM/마케팅/경영진이 "믿고 쓸 수 있는" 데이터 환경을 1인 Full-Cycle로 구축했습니다.</p>
+    <h2 class="section-title">QuickPay DataOps: End-to-End 데이터 플랫폼 구축</h2>
+    <p class="section-desc">가상 핀테크 서비스의 <b>비즈니스 가시성 확보</b>를 위해, 로그 설계부터 실시간성 배포 및 품질 관리까지 전 과정을 <b>클라우드 네이티브 환경</b>으로 구현했습니다.</p>
   </div>
 
   <div class="card" style="margin-bottom:32px">
     <div class="table-wrap" style="margin:0;border:none">
       <table>
-        <tr><td style="width:140px">서비스</td><td>QuickPay — 간편결제 / 송금 / 투자 핀테크 플랫폼</td></tr>
-        <tr><td>역할</td><td>Data Engineer (1인) — 로그 설계 ~ 대시보드 운영까지 Full-Cycle</td></tr>
-        <tr><td>기간</td><td>2024.06 ~ 현재</td></tr>
-        <tr><td>목표</td><td>PM/마케팅/경영진이 "믿고 쓸 수 있는" 데이터 환경 구축</td></tr>
+        <tr><td style="width:140px">Project Context</td><td><b>QuickPay</b> — 대규모 트랜잭션 기반의 간편결제 및 송금 핀테크 서비스</td></tr>
+        <tr><td>역할</td><td>Data Engineer (1인) — 인프라 아키텍처 설계, CDC 파이프라인 구축 및 Data Mart 운영</td></tr>
+        <tr><td>Tech Stack</td><td>Python, Docker, Airflow, dbt, PostgreSQL, Great Expectations, Tableau</td></tr>
+        <tr><td>목표</td><td>기반의 의사결정 체계 구축 및 파이프라인 운영 효율화</td></tr>
       </table>
     </div>
   </div>
@@ -287,16 +287,6 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
     <div class="stack-row"><div class="stack-label">시각화</div><div class="stack-value"><span class="tag tag-purple">Dashboard</span> Revenue, Funnel, Retention, Quality</div></div>
     <div class="stack-row"><div class="stack-label">인프라</div><div class="stack-value"><span class="tag tag-green">GCP</span> BigQuery · Pub/Sub · GKE + Terraform + Docker</div></div>
   </div>
-
-  <!-- JD Mapping -->
-  <h3 style="text-align:center;margin:48px 0 16px;font-size:18px;font-weight:700">🎯 토스 JD 매핑</h3>
-  <div class="jd-map">
-    <div class="jd-row"><div class="jd-left">로그 설계 및 데이터 거버넌스</div><div class="jd-arrow">→</div><div class="jd-right">PART 1: 이벤트 택소노미 & 스키마 설계</div></div>
-    <div class="jd-row"><div class="jd-left">지표 정의 및 데이터 정합성 관리</div><div class="jd-arrow">→</div><div class="jd-right">PART 2: 메트릭 딕셔너리 & dbt 모델</div></div>
-    <div class="jd-row"><div class="jd-left">데이터 QA 및 품질 관리</div><div class="jd-arrow">→</div><div class="jd-right">PART 3: Great Expectations & Slack 알림</div></div>
-    <div class="jd-row"><div class="jd-left">시각화 및 의사결정 지원</div><div class="jd-arrow">→</div><div class="jd-right">PART 4: 대시보드 & 분석 쿼리</div></div>
-    <div class="jd-row"><div class="jd-left">데이터 파이프라인 운영/자동화</div><div class="jd-arrow">→</div><div class="jd-right">PART 5: Airflow DAG & 운영 자동화</div></div>
-  </div>
 </section>
 
 <!-- ═══════════ PART 1 ═══════════ -->
@@ -310,7 +300,7 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
 
   <!-- Why -->
   <div class="card" style="margin-bottom:32px">
-    <h3>💡 Why 택소노미가 필요한가?</h3>
+    <h3>💡 Why Taxonomy가 필요한가?</h3>
     <p style="margin-top:12px">핀테크 서비스에서 로그 데이터는 단순한 기록이 아니라 <strong style="color:var(--text)">비즈니스 의사결정의 원천</strong>입니다. 택소노미 없이 개발자가 자유롭게 이벤트를 정의하면:</p>
     <ul style="margin:12px 0 0 20px;color:var(--text2);font-size:14px">
       <li><code style="color:var(--red)">paymentComplete</code>, <code style="color:var(--red)">payment_done</code>, <code style="color:var(--red)">pay_success</code> — 같은 행동, 다른 이름 3개</li>
@@ -482,6 +472,7 @@ GROUP BY dt</code></pre>
 │  <span style="color:var(--blue)">Staging (VIEW)</span>                         │
 │  stg_events       — 이벤트 정규화       │
 │  stg_transactions — 결제/송금 통합       │
+│    └─ <span style="color:var(--yellow)">PII 마스킹 (카드번호·계좌 SHA-256)</span>  │
 └──────────────────┬──────────────────────┘
                    │
                    ▼
@@ -691,7 +682,7 @@ def on_validation_complete(validation_result, suite_name):
       <div class="funnel-arrow">→</div>
       <div class="funnel-step" style="background:var(--green-bg)"><div class="f-label">결제 완료</div><div class="f-value">358,500</div><div class="f-pct" style="color:var(--green)">68.4%</div></div>
     </div>
-    <p style="font-size:13px;color:var(--text3);text-align:center;margin-top:8px">가장 큰 이탈 구간: <strong style="color:var(--yellow)">결제 화면 → 수단 선택 (20.2% 이탈)</strong> → UX 개선 인사이트</p>
+    <p style="font-size:13px;color:var(--text3);text-align:center;margin-top:8px">가장 큰 이탈 구간 발견: <strong style="color:var(--yellow)">결제 화면 → 수단 선택 (20.2% 이탈)</strong><br>→ PO 및 프론트엔드 팀에 <strong style="color:var(--text)">'결제 수단 로딩 속도 로그'</strong> 추가 요청하여 기술적 병목인지 UX 문제인지 검증 제안</p>
   </div>
 
   <!-- Charts (Tabbed) -->
@@ -825,6 +816,7 @@ HAVING cs.cohort_size >= 50</code></pre>
       <li>Daily DAG 실패 시에도 <strong style="color:var(--text)">품질 모니터링은 독립 수행</strong></li>
       <li>품질 검증 주기(6h)와 메트릭 집계 주기(24h) 상이</li>
       <li>장애 대응 시 <strong style="color:var(--text)">영향 범위 격리</strong></li>
+      <li>Staging → <strong style="color:var(--green)">VIEW (스토리지 비용 ₩0)</strong>, Mart → <strong style="color:var(--green)">파티셔닝 TABLE (스캔 비용 최적화)</strong>로 BigQuery 비용 구조 설계</li>
     </ul>
   </div>
 
