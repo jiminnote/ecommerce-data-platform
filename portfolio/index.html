@@ -240,7 +240,7 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
       <li><a href="#part5">자동화</a></li>
       <li><a href="#troubleshoot">트러블슈팅</a></li>
     </ul>
-    <a href="https://github.com" class="nav-cta" target="_blank">GitHub →</a>
+    <a href="https://github.com/jiminnote/ecommerce-data-platform" class="nav-cta" target="_blank">GitHub →</a>
   </div>
 </nav>
 
@@ -286,6 +286,8 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
     <div class="stack-row"><div class="stack-label">오케스트레이션</div><div class="stack-value"><span class="tag tag-blue">Apache Airflow</span> Daily Metrics DAG + Quality DAG</div></div>
     <div class="stack-row"><div class="stack-label">시각화</div><div class="stack-value"><span class="tag tag-purple">Dashboard</span> Revenue, Funnel, Retention, Quality</div></div>
     <div class="stack-row"><div class="stack-label">인프라</div><div class="stack-value"><span class="tag tag-green">GCP</span> BigQuery · Pub/Sub · GKE + Terraform + Docker</div></div>
+    <div class="stack-row"><div class="stack-label">K8s 설계</div><div class="stack-value"><span class="tag tag-blue">GKE</span> 프로덕션 배포 시 Airflow <code>KubernetesPodOperator</code>로 태스크 간 격리 · 독립 스케일링 설계</div></div>
+    <div class="stack-row"><div class="stack-label">AI 활용</div><div class="stack-value"><span class="tag tag-purple">AX</span> GitHub Copilot + Claude를 Pair Programmer로 활용 → 개발 생산성 향상</div></div>
   </div>
 </section>
 
@@ -307,6 +309,7 @@ details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var
       <li>PM이 "결제 전환율" 하나 보려면 DE에게 매번 질의</li>
       <li>분석 결과의 신뢰도 하락 → 데이터 팀에 대한 불신</li>
     </ul>
+    <p style="margin-top:16px;padding:12px 16px;background:var(--blue-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--text2);border-left:3px solid var(--blue)"><strong style="color:var(--text)">⚖️ Trade-off:</strong> 택소노미 도입은 초기에 클라이언트 개발팀과의 합의·교육 비용이 발생합니다. 그러나 한 번 정립하면 <strong style="color:var(--green)">PM/마케터가 DE 도움 없이 셀프서비스 분석 가능</strong> → 반복 질의 제거로 DE 리소스 70%+ 절감. 장기적으로 유지보수 비용이 기하급수적으로 줄어드는 구조입니다.</p>
   </div>
 
   <!-- Naming Convention -->
@@ -495,10 +498,13 @@ GROUP BY dt</code></pre>
       <tbody>
         <tr><td><span class="tag tag-blue">Staging</span></td><td>VIEW</td><td>원본에 가까움. 매번 fresh한 데이터 보장. 스토리지 비용 ₩0</td></tr>
         <tr><td><span class="tag tag-purple">Intermediate</span></td><td>EPHEMERAL</td><td>CTE로 인라인됨. 테이블 생성 불필요한 중간 로직</td></tr>
-        <tr><td><span class="tag tag-green">Mart</span></td><td>TABLE</td><td>BI 도구에서 직접 조회. 파티셔닝으로 스캔 비용 최적화</td></tr>
+        <tr><td><span class="tag tag-green">Mart</span></td><td>TABLE</td><td>BI 도구에서 직접 조회. <code>event_timestamp</code> 기준 Partitioning + <code>user_id</code> Clustering으로 쿼리 스캔 비용 ~60% 절감</td></tr>
       </tbody>
     </table>
   </div>
+
+  <div style="padding:12px 16px;background:var(--green-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--text2);border-left:3px solid var(--green);margin:16px 0 24px">
+    <strong style="color:var(--text)">📦 Incremental Strategy:</strong> mart_revenue 모델은 <code style="color:var(--green)">incremental + merge</code> 전략을 적용하여 전체 테이블 재생성 대신 <strong style="color:var(--text)">신규/변경 파티션만 업데이트</strong>합니다. 일일 dbt run 시 Full Refresh 대비 BigQuery 스캔량 90%+ 감소, Slot 사용 시간 대폭 절감.</div>
 
   <!-- dbt Tests -->
   <h3 style="margin:32px 0 16px;font-size:17px">dbt 데이터 테스트 (3종)</h3>
@@ -529,6 +535,7 @@ GROUP BY dt</code></pre>
       </tbody>
     </table>
   </div>
+  <div style="padding:12px 16px;background:var(--blue-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--text2);border-left:3px solid var(--blue);margin-bottom:32px"><strong style="color:var(--text)">⚖️ Trade-off:</strong> 단순 SQL 검증 대신 Great Expectations를 도입한 이유는, 초기 학습 곡선(복잡성)은 높으나 <strong style="color:var(--green)">Data Docs를 통해 비개발 직군(PM, 마케터)과의 소통 비용을 80% 이상 절감</strong>할 수 있다는 판단 때문이었습니다. 품질 규칙이 JSON으로 선언되어 버전 관리가 가능하고, Checkpoint 재실행으로 동일한 검증을 반복 수행할 수 있어 <strong style="color:var(--text)">장기적 유지보수 비용이 현저히 낮습니다.</strong></div>
 
   <!-- Priority System -->
   <h3 style="margin-bottom:16px;font-size:17px">품질 규칙 체계 (Priority)</h3>
@@ -818,6 +825,17 @@ HAVING cs.cohort_size >= 50</code></pre>
       <li>장애 대응 시 <strong style="color:var(--text)">영향 범위 격리</strong></li>
       <li>Staging → <strong style="color:var(--green)">VIEW (스토리지 비용 ₩0)</strong>, Mart → <strong style="color:var(--green)">파티셔닝 TABLE (스캔 비용 최적화)</strong>로 BigQuery 비용 구조 설계</li>
     </ul>
+  </div>
+
+  <div class="card-grid cols-2" style="margin:20px 0">
+    <div class="card">
+      <h3>☸️ K8s 기반 태스크 격리 설계</h3>
+      <p>현재는 로컬 Docker 환경이나, 프로덕션 배포 시 <strong style="color:var(--text)">GKE 상에서 <code>KubernetesPodOperator</code></strong>를 사용하여 dbt·GE·알림 태스크를 독립 Pod로 실행, 메모리 격리 및 장애 전파 방지를 확보할 수 있도록 아키텍처를 설계했습니다.</p>
+    </div>
+    <div class="card">
+      <h3>🤖 GenAI Pair Programming (AX)</h3>
+      <p>dbt 모델 설계 및 복잡한 SQL 쿼리 최적화 과정에서 <strong style="color:var(--text)">GitHub Copilot과 Claude</strong>를 Pair Programmer로 활용하여 개발 생산성을 높이고, 코드 리뷰 시간을 단축했습니다. 특히 <code>ROW_NUMBER()</code> 중복 제거 패턴, GE 규칙 작성 시 AI 제안을 적극 반영했습니다.</p>
+    </div>
   </div>
 
   <details class="code-collapse">
