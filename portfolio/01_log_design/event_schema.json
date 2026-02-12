@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QuickPay Event Schema",
+  "description": "핀테크 서비스 QuickPay의 이벤트 로그 표준 스키마. 모든 클라이언트(iOS/Android/Web)는 이 스키마를 준수하여 로그를 전송해야 합니다.",
+  "version": "1.2.0",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_name",
+    "event_timestamp",
+    "user_id",
+    "session_id",
+    "device_id",
+    "device_type",
+    "app_version"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "이벤트 고유 ID (UUID v4). 중복 제거의 기준 키.",
+      "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "event_name": {
+      "type": "string",
+      "pattern": "^[a-z_]+\\.[a-z_]+\\.[a-z_]+$",
+      "description": "Taxonomy 기반 이벤트명. category.action.label 형식.",
+      "examples": [
+        "payment.complete.payment_success",
+        "transfer.submit.transfer_request",
+        "auth.view.login_screen"
+      ]
+    },
+    "event_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "이벤트 발생 시각 (ISO 8601, UTC).",
+      "examples": ["2026-02-12T14:30:00.000Z"]
+    },
+    "user_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "유저 고유 ID. 비로그인 시 'anonymous_{device_id}' 형식.",
+      "examples": ["user_12345", "anonymous_abc-def-123"]
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "세션 ID. 앱 포그라운드 진입 시 갱신.",
+      "examples": ["sess_a1b2c3d4"]
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "디바이스 고유 식별자."
+    },
+    "device_type": {
+      "type": "string",
+      "enum": ["ios", "android", "web"],
+      "description": "클라이언트 플랫폼 타입."
+    },
+    "app_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "앱 버전 (시맨틱 버전).",
+      "examples": ["3.2.1"]
+    },
+    "os_version": {
+      "type": ["string", "null"],
+      "description": "OS 버전. Null 허용.",
+      "examples": ["iOS 17.2", "Android 14"]
+    },
+    "screen_name": {
+      "type": ["string", "null"],
+      "description": "현재 화면명. Null 허용.",
+      "examples": ["payment_checkout", "transfer_confirm"]
+    },
+    "properties": {
+      "type": "object",
+      "description": "도메인별 확장 속성. 이벤트 카테고리에 따라 스키마가 다름.",
+      "properties": {
+        "transaction_id": {
+          "type": ["string", "null"],
+          "description": "결제/송금 트랜잭션 ID"
+        },
+        "amount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "금액 (원 단위). 핀테크 특성상 음수 불가."
+        },
+        "payment_method": {
+          "type": ["string", "null"],
+          "enum": ["card", "bank_transfer", "quickpay_balance", null],
+          "description": "결제 수단"
+        },
+        "merchant_id": {
+          "type": ["string", "null"],
+          "description": "가맹점 ID"
+        },
+        "merchant_category": {
+          "type": ["string", "null"],
+          "description": "가맹점 업종 코드 (MCC)"
+        },
+        "is_first_payment": {
+          "type": ["boolean", "null"],
+          "description": "첫 결제 여부"
+        },
+        "transfer_id": {
+          "type": ["string", "null"],
+          "description": "송금 트랜잭션 ID"
+        },
+        "from_account_type": {
+          "type": ["string", "null"],
+          "description": "출금 계좌 유형"
+        },
+        "to_account_type": {
+          "type": ["string", "null"],
+          "description": "입금 계좌 유형"
+        },
+        "error_code": {
+          "type": ["string", "null"],
+          "description": "에러 코드 (에러 이벤트 시)"
+        },
+        "error_message": {
+          "type": ["string", "null"],
+          "description": "에러 메시지"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>핀테크 DataOps 포트폴리오 — QuickPay</title>
+<meta name="description" content="QuickPay 간편결제 서비스를 위한 DataOps 포트폴리오. 로그 설계, 지표 정의, 데이터 품질, 시각화, 운영 자동화.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<style>
+/* ═══════════ Reset & Base ═══════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090B;--bg2:#18181B;--bg3:#27272A;--border:#3F3F46;
+  --text:#FAFAFA;--text2:#A1A1AA;--text3:#71717A;
+  --blue:#3B82F6;--blue-bg:#3B82F620;--purple:#8B5CF6;--purple-bg:#8B5CF620;
+  --green:#22C55E;--green-bg:#22C55E18;--yellow:#F59E0B;--yellow-bg:#F59E0B18;
+  --red:#EF4444;--pink:#EC4899;
+  --radius:12px;--radius-sm:8px;
+}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+::selection{background:var(--blue);color:#fff}
+
+/* ═══════════ Navigation ═══════════ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg)ee;backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px}
+.nav-logo{font-weight:800;font-size:18px;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--blue)}
+.nav-links{display:flex;gap:4px;list-style:none}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:.2s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--bg3)}
+.nav-cta{background:var(--blue);color:#fff;font-size:13px;font-weight:600;padding:8px 20px;border-radius:8px;text-decoration:none;transition:.2s}
+.nav-cta:hover{opacity:.85}
+
+/* ═══════════ Hero ═══════════ */
+.hero{padding:110px 32px 48px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,var(--blue)12 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);padding:6px 16px;border-radius:20px;font-size:13px;color:var(--text2);margin-bottom:24px}
+.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-1px}
+.hero h1 .accent{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:18px;color:var(--text2);max-width:640px;margin:0 auto 40px;line-height:1.6}
+.hero-stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+.hero-stat .num{font-size:32px;font-weight:800;color:var(--blue)}
+.hero-stat .label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* ═══════════ Sections ═══════════ */
+.section{max-width:1200px;margin:0 auto;padding:52px 32px}
+.section-header{text-align:center;margin-bottom:32px}
+.section-label{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:12px}
+.section-title{font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-.5px;margin-bottom:12px}
+.section-desc{font-size:16px;color:var(--text2);max-width:600px;margin:0 auto}
+.divider{border:none;border-top:1px solid var(--border);margin:0 auto;max-width:1200px}
+
+/* ═══════════ Cards ═══════════ */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;transition:.3s}
+.card:hover{border-color:var(--text3)}
+.card-grid{display:grid;gap:20px}
+.card-grid.cols-2{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+.card-grid.cols-3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card-grid.cols-5{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.card p{font-size:14px;color:var(--text2);line-height:1.6}
+
+/* ═══════════ JD Map ═══════════ */
+.jd-map{display:grid;gap:2px;border-radius:var(--radius);overflow:hidden;margin-top:40px}
+.jd-row{display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;background:var(--bg2);padding:18px 24px}
+.jd-row:nth-child(even){background:var(--bg3)40}
+.jd-left{font-size:14px;color:var(--text2)}
+.jd-arrow{text-align:center;color:var(--blue);font-weight:700}
+.jd-right{font-size:14px;font-weight:600;color:var(--text)}
+
+/* ═══════════ Code Blocks ═══════════ */
+.code-block{background:#0D1117;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:20px 0}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#161B22;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)}
+.code-header .lang{display:flex;align-items:center;gap:6px}
+.code-header .file{color:var(--text2)}
+.code-block pre{margin:0;padding:20px;overflow-x:auto}
+.code-block code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65}
+
+/* ═══════════ Tables ═══════════ */
+.table-wrap{overflow-x:auto;margin:20px 0;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--bg3);font-weight:600;text-align:left;padding:12px 16px;color:var(--text2);font-size:12px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:12px 16px;border-top:1px solid var(--border);color:var(--text2)}
+tr:hover td{background:var(--bg2)}
+td:first-child{color:var(--text);font-weight:600}
+.tag{display:inline-flex;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.tag-red{background:#EF444420;color:var(--red)}
+
+/* ═══════════ KPI Cards ═══════════ */
+.kpi-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:32px 0}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center}
+.kpi .kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi .kpi-value{font-size:32px;font-weight:800;color:var(--text)}
+.kpi .kpi-change{font-size:12px;margin-top:6px}
+.kpi .kpi-change.up{color:var(--green)}
+.kpi .kpi-change.down{color:var(--red)}
+
+/* ═══════════ Funnel ═══════════ */
+.funnel{display:flex;align-items:center;gap:8px;margin:32px 0;overflow-x:auto;padding:8px 0}
+.funnel-step{flex:1;min-width:160px;text-align:center;padding:24px 16px;border-radius:var(--radius);position:relative}
+.funnel-step .f-label{font-size:12px;color:var(--text2);margin-bottom:8px}
+.funnel-step .f-value{font-size:24px;font-weight:800;color:var(--text)}
+.funnel-step .f-pct{font-size:13px;font-weight:600;margin-top:6px}
+.funnel-arrow{color:var(--text3);font-size:20px;flex-shrink:0}
+
+/* ═══════════ Flow Diagrams ═══════════ */
+.flow{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:16px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);line-height:1.6;white-space:pre;overflow-x:auto}
+
+/* ═══════════ Timeline/Steps ═══════════ */
+.steps{display:flex;flex-direction:column;gap:0;margin:32px 0}
+.step{display:flex;gap:24px;position:relative;padding-bottom:32px}
+.step:last-child{padding-bottom:0}
+.step::before{content:'';position:absolute;left:19px;top:44px;bottom:0;width:2px;background:var(--border)}
+.step:last-child::before{display:none}
+.step-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;position:relative;z-index:1}
+.step-content h4{font-size:15px;font-weight:700;margin-bottom:4px}
+.step-content p{font-size:14px;color:var(--text2)}
+
+/* ═══════════ Priority Grid ═══════════ */
+.priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
+.priority-card{border-radius:var(--radius);padding:24px;border:1px solid}
+.priority-card.p0{background:#EF444410;border-color:#EF444430}
+.priority-card.p1{background:#F59E0B10;border-color:#F59E0B30}
+.priority-card.p2{background:#22C55E10;border-color:#22C55E30}
+.priority-card h4{font-size:16px;font-weight:700;margin-bottom:8px}
+.priority-card p{font-size:13px;color:var(--text2)}
+
+/* ═══════════ Slack Mock ═══════════ */
+.slack-mock{background:#1A1D21;border-radius:var(--radius);padding:24px;margin:24px 0;border:1px solid #2C2F33;font-size:14px}
+.slack-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.slack-avatar{width:36px;height:36px;border-radius:8px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.slack-name{font-weight:700;color:#D1D2D3;font-size:15px}
+.slack-time{color:#616061;font-size:12px;margin-left:8px}
+.slack-body{color:#D1D2D3;line-height:1.7}
+.slack-body .slack-field{display:inline-block;margin-right:24px;margin-bottom:4px}
+.slack-body .slack-field-label{font-weight:700;color:#D1D2D3;font-size:13px}
+.slack-body .slack-field-value{color:#D1D2D3;font-size:13px}
+.slack-bar{width:4px;background:var(--red);border-radius:4px;margin-right:12px;flex-shrink:0}
+.slack-content{display:flex;margin-top:12px;padding:12px 0}
+.slack-detail{font-size:13px;color:#ABABAD}
+.slack-link{color:#1D9BD1;text-decoration:none}
+
+/* ═══════════ Dashboard Charts ═══════════ */
+.dashboard-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:16px 0}
+.dashboard-section h4{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-tabs{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:20px 0}
+.chart-tab-bar{display:flex;border-bottom:1px solid var(--border);overflow-x:auto}
+.chart-tab{flex:1;padding:14px 16px;background:none;border:none;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.2s;font-family:inherit}
+.chart-tab:hover{color:var(--text2);background:var(--bg3)}
+.chart-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.chart-tab-panel{padding:24px}
+details.code-collapse{margin:16px 0}
+details.code-collapse summary{cursor:pointer;padding:12px 16px;background:#161B22;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;color:var(--text2);list-style:none;transition:.2s}
+details.code-collapse summary::-webkit-details-marker{display:none}
+details.code-collapse summary::before{content:'▶ ';font-size:10px;transition:.15s;display:inline-block}
+details.code-collapse[open] summary::before{transform:rotate(90deg)}
+details.code-collapse summary:hover{color:var(--text);background:#1a2030}
+details.code-collapse[open] summary{border-radius:var(--radius) var(--radius) 0 0;border-bottom-color:transparent}
+details.code-collapse .code-block{margin:0;border-top:none;border-radius:0 0 var(--radius) var(--radius)}
+
+/* ═══════════ Quality Gauge ═══════════ */
+.quality-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.quality-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px;text-align:center}
+.quality-item .q-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.quality-item .q-value{font-size:28px;font-weight:800}
+.quality-item .q-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:10px;overflow:hidden}
+.quality-item .q-fill{height:100%;border-radius:2px}
+
+/* ═══════════ Troubleshoot Cards ═══════════ */
+.trouble-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin:20px 0}
+.trouble-card h4{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.trouble-card .situation{font-size:14px;color:var(--text2);margin:12px 0;padding:16px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid var(--red)}
+.trouble-card .solution{margin:12px 0}
+.trouble-card .solution li{font-size:14px;color:var(--text2);margin-bottom:6px;padding-left:4px}
+.trouble-card .lesson{font-size:14px;color:var(--yellow);background:var(--yellow-bg);padding:12px 16px;border-radius:var(--radius-sm);margin-top:12px}
+
+/* ═══════════ Tech Stack ═══════════ */
+.stack-grid{display:grid;grid-template-columns:auto 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:24px 0}
+.stack-row{display:contents}
+.stack-row:nth-child(even) .stack-label,.stack-row:nth-child(even) .stack-value{background:var(--bg3)30}
+.stack-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:14px 20px;border-right:1px solid var(--border);white-space:nowrap}
+.stack-value{font-size:14px;color:var(--text);padding:14px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ═══════════ Why Table ═══════════ */
+.why-cards{display:grid;gap:16px;margin:24px 0}
+.why-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:grid;grid-template-columns:140px 1fr 1fr;gap:20px;align-items:start}
+.why-card .why-tech{font-size:15px;font-weight:700;color:var(--blue)}
+.why-card .why-reason{font-size:14px;color:var(--text2)}
+.why-card .why-alt{font-size:13px;color:var(--text3)}
+
+/* ═══════════ Footer ═══════════ */
+.footer{text-align:center;padding:48px 32px;border-top:1px solid var(--border)}
+.footer h3{font-size:24px;font-weight:800;margin-bottom:12px}
+.footer p{color:var(--text2);font-size:14px;margin-bottom:24px}
+.footer-links{display:flex;gap:16px;justify-content:center;margin-bottom:32px}
+.footer-links a{color:var(--text2);text-decoration:none;padding:8px 20px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;transition:.2s}
+.footer-links a:hover{border-color:var(--blue);color:var(--blue)}
+.footer-copy{font-size:12px;color:var(--text3)}
+
+/* ═══════════ Responsive ═══════════ */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .chart-tab{padding:10px 12px;font-size:12px}
+  .priority-grid{grid-template-columns:1fr}
+  .quality-row{grid-template-columns:repeat(2,1fr)}
+  .why-card{grid-template-columns:1fr}
+  .jd-row{grid-template-columns:1fr 24px 1fr;padding:12px 16px}
+  .funnel{flex-direction:column}
+  .funnel-arrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo"><span>Quick</span>Pay</a>
+    <ul class="nav-links">
+      <li><a href="#overview">개요</a></li>
+      <li><a href="#part1">로그설계</a></li>
+      <li><a href="#part2">지표정의</a></li>
+      <li><a href="#part3">품질관리</a></li>
+      <li><a href="#part4">시각화</a></li>
+      <li><a href="#part5">자동화</a></li>
+      <li><a href="#troubleshoot">트러블슈팅</a></li>
+    </ul>
+    <a href="https://github.com" class="nav-cta" target="_blank">GitHub →</a>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="overview">
+  <div class="hero-badge"><span class="dot"></span> DataOps Portfolio 2024</div>
+  <h1>핀테크 DataOps:<br><span class="accent">신뢰할 수 있는 데이터 환경 구축</span></h1>
+  <p class="hero-sub">"데이터를 만드는 것이 아니라, <strong>데이터를 신뢰할 수 있게 만드는 것</strong>이 DataOps의 본질입니다."<br>QuickPay — 가상의 간편결제 서비스를 위한 데이터 운영 포트폴리오</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">5</div><div class="label">Part Portfolio</div></div>
+    <div class="hero-stat"><div class="num">18+</div><div class="label">Quality Rules</div></div>
+    <div class="hero-stat"><div class="num">6</div><div class="label">dbt Models</div></div>
+    <div class="hero-stat"><div class="num">2</div><div class="label">Airflow DAGs</div></div>
+  </div>
+</section>
+
+<!-- ═══════════ PROJECT OVERVIEW ═══════════ -->
+<hr class="divider">
+<section class="section">
+  <div class="section-header">
+    <div class="section-label">📌 Project Overview</div>
+    <h2 class="section-title">프로젝트 개요</h2>
+    <p class="section-desc">PM/마케팅/경영진이 "믿고 쓸 수 있는" 데이터 환경을 1인 Full-Cycle로 구축했습니다.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:32px">
+    <div class="table-wrap" style="margin:0;border:none">
+      <table>
+        <tr><td style="width:140px">서비스</td><td>QuickPay — 간편결제 / 송금 / 투자 핀테크 플랫폼</td></tr>
+        <tr><td>역할</td><td>Data Engineer (1인) — 로그 설계 ~ 대시보드 운영까지 Full-Cycle</td></tr>
+        <tr><td>기간</td><td>2024.06 ~ 현재</td></tr>
+        <tr><td>목표</td><td>PM/마케팅/경영진이 "믿고 쓸 수 있는" 데이터 환경 구축</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="stack-grid">
+    <div class="stack-row"><div class="stack-label">로그 설계</div><div class="stack-value"><span class="tag tag-blue">Event Taxonomy</span> Category.Action.Label + JSON Schema</div></div>
+    <div class="stack-row"><div class="stack-label">데이터 수집</div><div class="stack-value"><span class="tag tag-green">FastAPI</span> Event Collector → Pub/Sub → BigQuery</div></div>
+    <div class="stack-row"><div class="stack-label">변환/모델링</div><div class="stack-value"><span class="tag tag-purple">dbt</span> staging → intermediate → mart (3-Layer)</div></div>
+    <div class="stack-row"><div class="stack-label">품질 관리</div><div class="stack-value"><span class="tag tag-yellow">Great Expectations</span> + Slack Alert (P0/P1/P2)</div></div>
+    <div class="stack-row"><div class="stack-label">오케스트레이션</div><div class="stack-value"><span class="tag tag-blue">Apache Airflow</span> Daily Metrics DAG + Quality DAG</div></div>
+    <div class="stack-row"><div class="stack-label">시각화</div><div class="stack-value"><span class="tag tag-purple">Dashboard</span> Revenue, Funnel, Retention, Quality</div></div>
+    <div class="stack-row"><div class="stack-label">인프라</div><div class="stack-value"><span class="tag tag-green">GCP</span> BigQuery · Pub/Sub · GKE + Terraform + Docker</div></div>
+  </div>
+
+  <!-- JD Mapping -->
+  <h3 style="text-align:center;margin:48px 0 16px;font-size:18px;font-weight:700">🎯 토스 JD 매핑</h3>
+  <div class="jd-map">
+    <div class="jd-row"><div class="jd-left">로그 설계 및 데이터 거버넌스</div><div class="jd-arrow">→</div><div class="jd-right">PART 1: 이벤트 택소노미 & 스키마 설계</div></div>
+    <div class="jd-row"><div class="jd-left">지표 정의 및 데이터 정합성 관리</div><div class="jd-arrow">→</div><div class="jd-right">PART 2: 메트릭 딕셔너리 & dbt 모델</div></div>
+    <div class="jd-row"><div class="jd-left">데이터 QA 및 품질 관리</div><div class="jd-arrow">→</div><div class="jd-right">PART 3: Great Expectations & Slack 알림</div></div>
+    <div class="jd-row"><div class="jd-left">시각화 및 의사결정 지원</div><div class="jd-arrow">→</div><div class="jd-right">PART 4: 대시보드 & 분석 쿼리</div></div>
+    <div class="jd-row"><div class="jd-left">데이터 파이프라인 운영/자동화</div><div class="jd-arrow">→</div><div class="jd-right">PART 5: Airflow DAG & 운영 자동화</div></div>
+  </div>
+</section>
+
+<!-- ═══════════ PART 1 ═══════════ -->
+<hr class="divider">
+<section class="section" id="part1">
+  <div class="section-header">
+    <div class="section-label">📐 Part 1</div>
+    <h2 class="section-title">로그 설계 & 데이터 거버넌스</h2>
+    <p class="section-desc">"좋은 데이터 분석은 좋은 로그 설계에서 시작됩니다."</p>
+  </div>
+
+  <!-- Why -->
+  <div class="card" style="margin-bottom:32px">
+    <h3>💡 Why 택소노미가 필요한가?</h3>
+    <p style="margin-top:12px">핀테크 서비스에서 로그 데이터는 단순한 기록이 아니라 <strong style="color:var(--text)">비즈니스 의사결정의 원천</strong>입니다. 택소노미 없이 개발자가 자유롭게 이벤트를 정의하면:</p>
+    <ul style="margin:12px 0 0 20px;color:var(--text2);font-size:14px">
+      <li><code style="color:var(--red)">paymentComplete</code>, <code style="color:var(--red)">payment_done</code>, <code style="color:var(--red)">pay_success</code> — 같은 행동, 다른 이름 3개</li>
+      <li>PM이 "결제 전환율" 하나 보려면 DE에게 매번 질의</li>
+      <li>분석 결과의 신뢰도 하락 → 데이터 팀에 대한 불신</li>
+    </ul>
+  </div>
+
+  <!-- Naming Convention -->
+  <h3 style="margin-bottom:16px;font-size:17px">Category.Action.Label 네이밍 규칙</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">📝 Event Naming Convention</span><span class="file">01_log_design/event_taxonomy.md</span></div>
+    <pre><code class="language-plaintext">{category}.{action}.{label}
+
+예시:
+  payment.view.payment_screen         → 결제 화면 진입
+  payment.click.payment_method_select → 결제 수단 선택
+  payment.submit.payment_request      → 결제 요청
+  payment.complete.payment_success    → 결제 완료
+  payment.fail.payment_timeout        → 결제 실패 (타임아웃)
+
+8개 카테고리: auth · payment · transfer · invest · benefit · notification · onboarding · error</code></pre>
+  </div>
+
+  <!-- Funnel Flow -->
+  <h3 style="margin:32px 0 16px;font-size:17px">결제 퍼널 이벤트 흐름</h3>
+  <div class="funnel">
+    <div class="funnel-step" style="background:var(--blue-bg)"><div class="f-label">payment.view.*</div><div class="f-value" style="font-size:18px">진입</div></div>
+    <div class="funnel-arrow">→</div>
+    <div class="funnel-step" style="background:var(--purple-bg)"><div class="f-label">payment.click.*</div><div class="f-value" style="font-size:18px">수단 선택</div></div>
+    <div class="funnel-arrow">→</div>
+    <div class="funnel-step" style="background:#EC489920"><div class="f-label">payment.submit.*</div><div class="f-value" style="font-size:18px">결제 요청</div></div>
+    <div class="funnel-arrow">→</div>
+    <div class="funnel-step" style="background:var(--green-bg)"><div class="f-label">payment.complete.*</div><div class="f-value" style="font-size:18px">완료/실패</div></div>
+  </div>
+
+  <!-- Schema -->
+  <h3 style="margin:32px 0 16px;font-size:17px">이벤트 스키마 (JSON Schema v1.2.0)</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">🔧 JSON</span><span class="file">01_log_design/event_schema.json</span></div>
+    <pre><code class="language-json">{
+  "event_id": "evt_a1b2c3d4e5",
+  "event_name": "payment.complete.payment_success",
+  "event_timestamp": "2024-12-15T14:23:45.123Z",
+  "user_id": "usr_12345",
+  "session_id": "ses_abcde",
+  "device_id": "dev_xyz",
+  "device_type": "ios",
+  "app_version": "3.2.1",
+  "properties": {
+    "amount": 50000,
+    "payment_method": "quickpay_balance",
+    "transaction_id": "TXN-A1B2C3D4",
+    "merchant_category": "food_delivery"
+  }
+}</code></pre>
+  </div>
+
+  <div class="card-grid cols-3" style="margin-top:24px">
+    <div class="card">
+      <h3>🔍 정규식 검증</h3>
+      <p><code style="color:var(--blue)">^[a-z]+\.[a-z]+\.[a-z_]+$</code><br>event_name 패턴 강제</p>
+    </div>
+    <div class="card">
+      <h3>📋 필수 8개 필드</h3>
+      <p>event_id, event_name, event_timestamp, user_id, session_id, device_id, device_type, app_version</p>
+    </div>
+    <div class="card">
+      <h3>📖 개발자 가이드</h3>
+      <p>iOS (Swift), Android (Kotlin), Backend (Python) SDK 예시 + 공통 실수 목록 제공</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PART 2 ═══════════ -->
+<hr class="divider">
+<section class="section" id="part2">
+  <div class="section-header">
+    <div class="section-label">📊 Part 2</div>
+    <h2 class="section-title">지표 정의 & 데이터 정합성</h2>
+    <p class="section-desc">"모두가 같은 숫자를 보고 있다고 확신할 수 있어야 합니다."</p>
+  </div>
+
+  <!-- Why -->
+  <div class="card" style="margin-bottom:32px">
+    <h3>💡 Why 메트릭 딕셔너리?</h3>
+    <p style="margin-top:12px">PM이 "DAU가 몇이야?"라고 물었을 때, 사람마다 다른 숫자를 대답하면?</p>
+    <ul style="margin:12px 0 0 20px;color:var(--text2);font-size:14px">
+      <li>마케팅: "앱 설치 후 1회 이상 접속 = <strong style="color:var(--text)">120만</strong>"</li>
+      <li>프로덕트: "로그인한 유저 = <strong style="color:var(--text)">98만</strong>"</li>
+      <li>경영진: "결제한 유저 = <strong style="color:var(--text)">45만</strong>"</li>
+    </ul>
+    <p style="margin-top:12px;color:var(--blue);font-weight:600">→ 하나의 지표 = 하나의 정의 = 하나의 SQL</p>
+  </div>
+
+  <!-- Metrics Table -->
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>지표</th><th>정의</th><th>산식</th></tr></thead>
+      <tbody>
+        <tr><td>DAU</td><td>하루 중 로그인 이벤트 1회 이상 고유 유저 수</td><td><code>COUNT(DISTINCT user_id) WHERE event = 'auth.complete.login'</code></td></tr>
+        <tr><td>ARPPU</td><td>결제 유저 1인당 평균 순매출</td><td><code>SUM(net_revenue) / COUNT(DISTINCT paying_user_id)</code></td></tr>
+        <tr><td>D7 Retention</td><td>가입 후 7일째 재방문한 유저 비율</td><td><code>D7_active_users / cohort_size × 100</code></td></tr>
+        <tr><td>Payment CVR</td><td>결제 화면 진입 대비 결제 완료 비율</td><td><code>complete_sessions / view_sessions × 100</code></td></tr>
+        <tr><td>Error Rate</td><td>전체 결제 시도 중 실패 비율</td><td><code>failed_txn / total_txn × 100</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ARPPU SQL -->
+  <details class="code-collapse">
+    <summary>💎 핀테크 ARPPU SQL — 중복 결제 제거 + 환불 차감</summary>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">SQL (BigQuery)</span><span class="file">02_metrics_definition/metrics_sql/arppu.sql</span></div>
+    <pre><code class="language-sql">WITH payments AS (
+    SELECT
+        DATE(e.event_timestamp) AS dt,
+        e.user_id,
+        e.properties.transaction_id,
+        e.properties.amount AS gross_amount,
+        -- 중복 결제 방지: 동일 transaction_id 중 최초 건만 유효
+        ROW_NUMBER() OVER (
+            PARTITION BY e.properties.transaction_id
+            ORDER BY e.event_timestamp ASC
+        ) AS txn_rank
+    FROM {{ ref('stg_events') }} e
+    WHERE e.event_name = 'payment.complete.payment_success'
+      AND e.properties.amount > 0
+),
+valid_payments AS (
+    SELECT * FROM payments WHERE txn_rank = 1  -- 중복 제거
+),
+refunds AS (
+    SELECT e.properties.transaction_id,
+           e.properties.amount AS refund_amount
+    FROM {{ ref('stg_events') }} e
+    WHERE e.event_name = 'payment.complete.refund'
+)
+SELECT
+    dt,
+    COUNT(DISTINCT user_id) AS paying_users,
+    SUM(gross_amount) AS gross_revenue,
+    SUM(refund_amount) AS total_refunds,
+    SUM(gross_amount - COALESCE(refund_amount, 0)) AS net_revenue,
+    -- ★ ARPPU
+    SAFE_DIVIDE(
+        SUM(gross_amount - COALESCE(refund_amount, 0)),
+        COUNT(DISTINCT user_id)
+    ) AS arppu
+FROM valid_payments p
+LEFT JOIN refunds r ON p.transaction_id = r.transaction_id
+GROUP BY dt</code></pre>
+  </div>
+  </details>
+
+  <div class="card-grid cols-2" style="margin-top:24px">
+    <div class="card"><h3>🔄 중복 결제 제거</h3><p><code>ROW_NUMBER() PARTITION BY transaction_id</code> — 동일 트랜잭션 중 최초 건만 유효 처리</p></div>
+    <div class="card"><h3>💰 환불 처리</h3><p>Gross Revenue - Refund = <strong style="color:var(--green)">Net Revenue</strong> — 부분 환불도 정확히 차감</p></div>
+    <div class="card"><h3>🚫 취소 건 제외</h3><p><code>amount > 0</code> 필터로 취소/무효 결제 완전 제거</p></div>
+    <div class="card"><h3>📊 SAFE_DIVIDE</h3><p>BigQuery 전용 — 0으로 나누기 시 NULL 반환으로 에러 방지</p></div>
+  </div>
+
+  <!-- dbt Model -->
+  <h3 style="margin:48px 0 16px;font-size:17px">dbt 3-Layer 아키텍처</h3>
+  <div class="flow">Raw (BigQuery)
+    │
+    ▼
+┌─────────────────────────────────────────┐
+│  <span style="color:var(--blue)">Staging (VIEW)</span>                         │
+│  stg_events       — 이벤트 정규화       │
+│  stg_transactions — 결제/송금 통합       │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│  <span style="color:var(--purple)">Intermediate (EPHEMERAL)</span>                 │
+│  int_user_sessions — 세션 집계           │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────┐
+│  <span style="color:var(--green)">Mart (TABLE, partitioned)</span>                │
+│  mart_revenue        — 매출 분석         │
+│  mart_payment_funnel — 퍼널 전환율       │
+│  mart_user_retention — 코호트 리텐션      │
+└─────────────────────────────────────────┘</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layer</th><th>Materialization</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-blue">Staging</span></td><td>VIEW</td><td>원본에 가까움. 매번 fresh한 데이터 보장. 스토리지 비용 ₩0</td></tr>
+        <tr><td><span class="tag tag-purple">Intermediate</span></td><td>EPHEMERAL</td><td>CTE로 인라인됨. 테이블 생성 불필요한 중간 로직</td></tr>
+        <tr><td><span class="tag tag-green">Mart</span></td><td>TABLE</td><td>BI 도구에서 직접 조회. 파티셔닝으로 스캔 비용 최적화</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- dbt Tests -->
+  <h3 style="margin:32px 0 16px;font-size:17px">dbt 데이터 테스트 (3종)</h3>
+  <div class="card-grid cols-3">
+    <div class="card"><div class="card-icon" style="background:var(--green-bg)">✅</div><h3>assert_revenue_not_negative</h3><p>순매출(Net Revenue)이 음수인 행 감지</p></div>
+    <div class="card"><div class="card-icon" style="background:var(--yellow-bg)">📊</div><h3>assert_arppu_reasonable</h3><p>Z-score > 3 이상치 자동 감지 — 통계적 이상 탐지</p></div>
+    <div class="card"><div class="card-icon" style="background:var(--blue-bg)">🔑</div><h3>assert_unique_transaction_id</h3><p>트랜잭션 ID 중복 감지 — 이중 결제 방지</p></div>
+  </div>
+</section>
+
+<!-- ═══════════ PART 3 ═══════════ -->
+<hr class="divider">
+<section class="section" id="part3">
+  <div class="section-header">
+    <div class="section-label">🛡️ Part 3</div>
+    <h2 class="section-title">데이터 품질 & QA</h2>
+    <p class="section-desc">"데이터 품질 문제를 발견하는 것은 사람이 아니라 시스템이어야 합니다."</p>
+  </div>
+
+  <!-- Why GE -->
+  <div class="table-wrap" style="margin-bottom:32px">
+    <table>
+      <thead><tr><th>대안</th><th>장점</th><th>단점</th><th>선택</th></tr></thead>
+      <tbody>
+        <tr><td>dbt test만</td><td>dbt 내장, 간편</td><td>복잡한 분포/통계 검증 불가</td><td></td></tr>
+        <tr><td>직접 SQL 검증</td><td>유연</td><td>규칙 관리/재사용 어려움</td><td></td></tr>
+        <tr><td style="color:var(--green);font-weight:700">Great Expectations</td><td>선언적 규칙 + Data Docs + Checkpoint</td><td>학습 곡선</td><td><span class="tag tag-green">✅ 선택</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Priority System -->
+  <h3 style="margin-bottom:16px;font-size:17px">품질 규칙 체계 (Priority)</h3>
+  <div class="priority-grid">
+    <div class="priority-card p0">
+      <h4>🚨 P0 — Critical</h4>
+      <p><strong>기준:</strong> 분석 불가 수준<br><strong>예시:</strong> event_id NULL, amount 음수<br><strong>조치:</strong> 즉시 알림 + 파이프라인 중단</p>
+    </div>
+    <div class="priority-card p1">
+      <h4>⚠️ P1 — Warning</h4>
+      <p><strong>기준:</strong> 분석 왜곡 가능<br><strong>예시:</strong> device_type 이상값, 평균 금액 이탈<br><strong>조치:</strong> 알림 + 수동 확인</p>
+    </div>
+    <div class="priority-card p2">
+      <h4>ℹ️ P2 — Info</h4>
+      <p><strong>기준:</strong> 경미한 이상<br><strong>예시:</strong> 세션 카디널리티 변동<br><strong>조치:</strong> Daily Summary 포함</p>
+    </div>
+  </div>
+
+  <!-- Quality Rules -->
+  <h3 style="margin:32px 0 16px;font-size:17px">주요 품질 규칙</h3>
+  <div class="card-grid cols-2">
+    <div class="card">
+      <h3>📋 이벤트 로그 (10개 규칙)</h3>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);margin-top:12px;line-height:2">
+        <div><span class="tag tag-red">P0</span> event_id NOT NULL & UNIQUE</div>
+        <div><span class="tag tag-red">P0</span> user_id NOT NULL</div>
+        <div><span class="tag tag-red">P0</span> event_name regex: Category.Action.Label</div>
+        <div><span class="tag tag-yellow">P1</span> device_type IN ('ios','android','web')</div>
+        <div><span class="tag tag-red">P0</span> amount BETWEEN 0 AND 100,000,000</div>
+        <div><span class="tag tag-yellow">P1</span> row_count BETWEEN 10K AND 50M</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💳 트랜잭션 (8개 규칙)</h3>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);margin-top:12px;line-height:2">
+        <div><span class="tag tag-red">P0</span> transaction_id NOT NULL & UNIQUE</div>
+        <div><span class="tag tag-red">P0</span> amount > 0 (음수 결제 불가)</div>
+        <div><span class="tag tag-red">P0</span> status IN (COMPLETED, REFUNDED, ...)</div>
+        <div><span class="tag tag-yellow">P1</span> payment_method IN (card, quickpay, ...)</div>
+        <div><span class="tag tag-yellow">P1</span> AVG(amount) BETWEEN 1K AND 500K</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Flow -->
+  <h3 style="margin:32px 0 16px;font-size:17px">Slack 알림 시스템</h3>
+  <div class="flow" style="text-align:center">┌──────────────────┐     ┌──────────────┐     ┌─────────────────┐
+│ Great Expectations│────▶│ <span style="color:var(--blue)">slack_alert.py</span>│────▶│ Slack Channels   │
+│ Checkpoint 실행   │     │ 결과 파싱     │     │ #critical / #warn│
+└──────────────────┘     └──────────────┘     └─────────────────┘
+                                │
+                     ┌──────────┼──────────┐
+                     ▼          ▼          ▼
+                <span style="color:var(--red)">P0 → 중단</span>   <span style="color:var(--yellow)">P1 → 확인</span>   <span style="color:var(--green)">P2 → Summary</span></div>
+
+  <!-- Slack Mock -->
+  <h3 style="margin:32px 0 16px;font-size:17px">Slack 알림 예시 (P0)</h3>
+  <div class="slack-mock">
+    <div class="slack-header">
+      <div class="slack-avatar">Q</div>
+      <div><span class="slack-name">QuickPay Data Quality Bot</span><span class="slack-time">02:15 AM</span></div>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:#D1D2D3;margin-bottom:12px">🚨 [P0] 데이터 품질 검증 실패</div>
+    <div class="slack-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 32px;font-size:13px;margin-bottom:16px">
+      <div><span class="slack-field-label">Suite:</span> quickpay_events_suite</div>
+      <div><span class="slack-field-label">실행일:</span> 2024-12-15 02:15:00</div>
+      <div><span class="slack-field-label">실패 건수:</span> 2건</div>
+      <div><span class="slack-field-label">조치:</span> <span style="color:var(--red)">파이프라인 중단</span></div>
+    </div>
+    <div style="border-top:1px solid #2C2F33;padding-top:12px">
+      <div style="font-size:13px;font-weight:700;color:#D1D2D3;margin-bottom:8px">실패 상세:</div>
+      <div class="slack-content">
+        <div class="slack-bar"></div>
+        <div>
+          <div class="slack-detail">• <code>user_id</code> — 유저 ID 필수 — 없으면 행동 분석 불가 (이상 비율: 2.0%)</div>
+          <div class="slack-detail">• <code>properties.amount</code> — 결제 금액 음수 불가 (이상 비율: 0.1%)</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:13px"><a class="slack-link" href="#">🔗 Data Docs에서 전체 결과 확인</a> <span style="color:#E01E5A;font-weight:700">@channel</span></div>
+  </div>
+
+  <details class="code-collapse">
+    <summary>🐍 Slack 알림 시스템 코드 — slack_alert.py</summary>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">Python</span><span class="file">07_data_quality/slack_alert.py</span></div>
+    <pre><code class="language-python">PRIORITY_CONFIG = {
+    "P0": {
+        "channel": "#data-alert-critical",
+        "color": "#FF0000",
+        "emoji": "🚨",
+        "action": "파이프라인 중단",
+        "mention": "&lt;!channel&gt;",
+    },
+    "P1": {
+        "channel": "#data-alert",
+        "emoji": "⚠️",
+        "action": "수동 확인 필요",
+    },
+    "P2": {
+        "channel": "#data-daily-summary",
+        "emoji": "ℹ️",
+        "action": "일일 리포트 포함",
+    },
+}
+
+def on_validation_complete(validation_result, suite_name):
+    """GE Checkpoint 완료 후 자동 호출 — 결과 파싱 → Slack 알림."""
+    failures = parse_validation_result(validation_result)
+    if not failures:
+        return {"success": True, "alert_sent": False}
+
+    max_priority = "P0" if any(f["priority"]=="P0" for f in failures) else "P1"
+    message = build_slack_message(suite_name, failures, max_priority)
+    send_slack_alert(message)
+
+    if max_priority == "P0":
+        raise DataQualityError(f"P0 실패 — 파이프라인 중단")
+    return {"success": False, "should_halt": max_priority == "P0"}</code></pre>
+  </div>
+  </details>
+</section>
+
+<!-- ═══════════ PART 4 ═══════════ -->
+<hr class="divider">
+<section class="section" id="part4">
+  <div class="section-header">
+    <div class="section-label">📈 Part 4</div>
+    <h2 class="section-title">시각화 & 의사결정 지원</h2>
+    <p class="section-desc">"좋은 대시보드는 질문에 답하는 것이 아니라, 올바른 질문을 하게 만듭니다."</p>
+  </div>
+
+  <!-- Live KPI -->
+  <div class="kpi-cards">
+    <div class="kpi"><div class="kpi-label">DAU</div><div class="kpi-value">1.24M</div><div class="kpi-change up">▲ 3.2% vs yesterday</div></div>
+    <div class="kpi"><div class="kpi-label">Net Revenue</div><div class="kpi-value">₩4.8B</div><div class="kpi-change up">▲ 7.1% vs yesterday</div></div>
+    <div class="kpi"><div class="kpi-label">ARPPU</div><div class="kpi-value">₩12,400</div><div class="kpi-change down">▼ 1.3% vs yesterday</div></div>
+    <div class="kpi"><div class="kpi-label">Payment CVR</div><div class="kpi-value">68.4%</div><div class="kpi-change up">▲ 2.1% vs yesterday</div></div>
+    <div class="kpi"><div class="kpi-label">D7 Retention</div><div class="kpi-value">42.3%</div><div class="kpi-change up">▲ 0.8% vs last week</div></div>
+  </div>
+
+  <!-- Payment Funnel -->
+  <div class="dashboard-section">
+    <h4>💳 결제 퍼널 전환율 <span class="tag tag-blue" style="margin-left:8px">REAL-TIME</span></h4>
+    <div class="funnel">
+      <div class="funnel-step" style="background:var(--blue-bg)"><div class="f-label">결제 화면 진입</div><div class="f-value">524,300</div><div class="f-pct" style="color:var(--blue)">100%</div></div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background:var(--purple-bg)"><div class="f-label">결제 수단 선택</div><div class="f-value">418,200</div><div class="f-pct" style="color:var(--purple)">79.8%</div></div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background:#EC489920"><div class="f-label">결제 요청</div><div class="f-value">387,600</div><div class="f-pct" style="color:var(--pink)">73.9%</div></div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background:var(--green-bg)"><div class="f-label">결제 완료</div><div class="f-value">358,500</div><div class="f-pct" style="color:var(--green)">68.4%</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--text3);text-align:center;margin-top:8px">가장 큰 이탈 구간: <strong style="color:var(--yellow)">결제 화면 → 수단 선택 (20.2% 이탈)</strong> → UX 개선 인사이트</p>
+  </div>
+
+  <!-- Charts (Tabbed) -->
+  <div class="chart-tabs">
+    <div class="chart-tab-bar">
+      <button class="chart-tab active" data-tab="tab-revenue">📈 매출</button>
+      <button class="chart-tab" data-tab="tab-dau">👥 유저</button>
+      <button class="chart-tab" data-tab="tab-retention">🔄 리텐션</button>
+      <button class="chart-tab" data-tab="tab-payment">💰 결제수단</button>
+      <button class="chart-tab" data-tab="tab-volume">🔍 볼륨</button>
+    </div>
+    <div class="chart-tab-panel active" id="tab-revenue">
+      <canvas id="revenueChart" height="280"></canvas>
+    </div>
+    <div class="chart-tab-panel" id="tab-dau">
+      <canvas id="dauChart" height="280"></canvas>
+    </div>
+    <div class="chart-tab-panel" id="tab-retention">
+      <canvas id="retentionChart" height="280"></canvas>
+    </div>
+    <div class="chart-tab-panel" id="tab-payment">
+      <canvas id="paymentChart" height="280"></canvas>
+    </div>
+    <div class="chart-tab-panel" id="tab-volume">
+      <canvas id="volumeChart" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- Data Quality Gauge -->
+  <div class="dashboard-section">
+    <h4>🛡️ 데이터 품질 모니터링 <span class="tag tag-green" style="margin-left:8px">ALL PASS</span></h4>
+    <div class="quality-row">
+      <div class="quality-item"><div class="q-label">Completeness</div><div class="q-value" style="color:var(--green)">99.8%</div><div class="q-bar"><div class="q-fill" style="width:99.8%;background:var(--green)"></div></div></div>
+      <div class="quality-item"><div class="q-label">Uniqueness</div><div class="q-value" style="color:var(--green)">100%</div><div class="q-bar"><div class="q-fill" style="width:100%;background:var(--green)"></div></div></div>
+      <div class="quality-item"><div class="q-label">Consistency</div><div class="q-value" style="color:var(--green)">99.2%</div><div class="q-bar"><div class="q-fill" style="width:99.2%;background:var(--green)"></div></div></div>
+      <div class="quality-item"><div class="q-label">Freshness</div><div class="q-value" style="color:var(--green)">&lt; 5min</div><div class="q-bar"><div class="q-fill" style="width:95%;background:var(--green)"></div></div></div>
+    </div>
+  </div>
+
+  <!-- SQL Showcase -->
+  <details class="code-collapse">
+    <summary>💎 핵심 분석 쿼리 — 코호트 리텐션 (CTE 4단계, ★★★★)</summary>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">SQL (BigQuery)</span><span class="file">05_sql_queries/retention_analysis.sql</span></div>
+    <pre><code class="language-sql">-- Step 1: 유저별 최초 활동일 (코호트 기준)
+WITH user_cohort AS (
+    SELECT user_id,
+           MIN(DATE(event_timestamp)) AS cohort_date
+    FROM staging.events
+    WHERE event_name = 'auth.complete.login'
+      AND user_id NOT LIKE 'anonymous_%'
+    GROUP BY user_id
+),
+-- Step 2: 유저별 일별 활동
+daily_activity AS (
+    SELECT DISTINCT user_id, DATE(event_timestamp) AS active_date
+    FROM staging.events
+    WHERE event_name = 'auth.complete.login'
+),
+-- Step 3: 코호트 × Day N 매트릭스
+cohort_retention AS (
+    SELECT uc.cohort_date,
+           DATE_DIFF(da.active_date, uc.cohort_date, DAY) AS day_n,
+           COUNT(DISTINCT uc.user_id) AS retained_users
+    FROM user_cohort uc
+    INNER JOIN daily_activity da ON uc.user_id = da.user_id
+    WHERE DATE_DIFF(da.active_date, uc.cohort_date, DAY) BETWEEN 0 AND 30
+    GROUP BY 1, 2
+)
+-- Step 4: Pivot → D0~D30 리텐션율
+SELECT cr.cohort_date, cs.cohort_size,
+    MAX(CASE WHEN day_n = 1 THEN
+        ROUND(SAFE_DIVIDE(retained_users, cs.cohort_size) * 100, 1) END) AS d1,
+    MAX(CASE WHEN day_n = 7 THEN
+        ROUND(SAFE_DIVIDE(retained_users, cs.cohort_size) * 100, 1) END) AS d7,
+    MAX(CASE WHEN day_n = 30 THEN
+        ROUND(SAFE_DIVIDE(retained_users, cs.cohort_size) * 100, 1) END) AS d30
+FROM cohort_retention cr
+JOIN cohort_sizes cs ON cr.cohort_date = cs.cohort_date
+GROUP BY 1, 2
+HAVING cs.cohort_size >= 50</code></pre>
+  </div>
+  </details>
+</section>
+
+<!-- ═══════════ PART 5 ═══════════ -->
+<hr class="divider">
+<section class="section" id="part5">
+  <div class="section-header">
+    <div class="section-label">⚙️ Part 5</div>
+    <h2 class="section-title">운영 자동화</h2>
+    <p class="section-desc">"반복되는 작업은 자동화하고, 사람은 판단에 집중해야 합니다."</p>
+  </div>
+
+  <!-- DAG 1 -->
+  <h3 style="margin-bottom:16px;font-size:17px">Daily Metrics Pipeline</h3>
+  <div class="flow" style="text-align:center">매일 새벽 02:00 KST
+    │
+    ▼
+┌──────────┐   ┌──────────┐   ┌──────────┐
+│<span style="color:var(--blue)"> dbt       </span>│──▶│<span style="color:var(--blue)"> dbt       </span>│──▶│<span style="color:var(--blue)"> dbt       </span>│
+│<span style="color:var(--blue)"> Staging   </span>│   │<span style="color:var(--blue)"> Mart      </span>│   │<span style="color:var(--blue)"> Test      </span>│
+└──────────┘   └──────────┘   └─────┬────┘
+                                    │
+                                    ▼
+                          ┌────────────────┐
+                          │<span style="color:var(--yellow)"> Quality Check   </span>│
+                          │<span style="color:var(--yellow)"> (Great Expect.) </span>│
+                          └───────┬────────┘
+                                  │
+                                  ▼
+                          ┌────────────────┐
+                          │<span style="color:var(--purple)"> Dashboard       </span>│
+                          │<span style="color:var(--purple)"> Refresh         </span>│
+                          └───────┬────────┘
+                           ┌──────┴──────┐
+                           ▼             ▼
+                     <span style="color:var(--green)">✅ Success</span>    <span style="color:var(--red)">🚨 Failure</span></div>
+
+  <!-- DAG 2 -->
+  <h3 style="margin:32px 0 16px;font-size:17px">Quality Check Pipeline (6시간마다)</h3>
+  <div class="flow" style="text-align:center">06:00, 12:00, 18:00, 00:00 KST
+    │
+    ├──▶ <span style="color:var(--blue)">이벤트 품질 검증</span>      ──┐
+    ├──▶ <span style="color:var(--purple)">트랜잭션 품질 검증</span>    ──┼──▶ <span style="color:var(--yellow)">분기 판단</span> ──▶ Critical / Summary
+    └──▶ <span style="color:var(--green)">볼륨 이상 감지</span>        ──┘</div>
+
+  <div class="card" style="margin:24px 0">
+    <h3>💡 Why 2개 DAG 분리?</h3>
+    <ul style="margin:12px 0 0 20px;color:var(--text2);font-size:14px;line-height:2">
+      <li>Daily DAG 실패 시에도 <strong style="color:var(--text)">품질 모니터링은 독립 수행</strong></li>
+      <li>품질 검증 주기(6h)와 메트릭 집계 주기(24h) 상이</li>
+      <li>장애 대응 시 <strong style="color:var(--text)">영향 범위 격리</strong></li>
+    </ul>
+  </div>
+
+  <details class="code-collapse">
+    <summary>🐍 Airflow DAG 코드 — daily_metrics_dag.py</summary>
+  <div class="code-block">
+    <div class="code-header"><span class="lang">Python</span><span class="file">08_airflow_dags/daily_metrics_dag.py</span></div>
+    <pre><code class="language-python">dag = DAG(
+    dag_id="quickpay_daily_metrics",
+    default_args={
+        "owner": "quickpay-dataops",
+        "retries": 2,
+        "retry_delay": timedelta(minutes=5),
+        "execution_timeout": timedelta(hours=1),
+    },
+    schedule_interval="0 2 * * *",   # 매일 새벽 2시
+    catchup=False,
+    max_active_runs=1,
+)
+
+# Task Dependencies
+dbt_staging >> dbt_mart >> dbt_test >> quality_check >> dashboard_refresh
+dashboard_refresh >> [success_alert, failure_alert]</code></pre>
+  </div>
+  </details>
+
+  <!-- Operation Patterns -->
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>패턴</th><th>구현</th></tr></thead>
+      <tbody>
+        <tr><td>재시도</td><td><code>retries=2</code>, <code>retry_delay=5min</code> (Daily) / <code>retries=1</code> (Quality)</td></tr>
+        <tr><td>타임아웃</td><td><code>execution_timeout=1h</code> (Daily) / <code>30min</code> (Quality)</td></tr>
+        <tr><td>동시 실행 방지</td><td><code>max_active_runs=1</code></td></tr>
+        <tr><td>실패 알림</td><td><code>TriggerRule.ONE_FAILED</code> → Slack #data-alert-critical</td></tr>
+        <tr><td>결과 전파</td><td>XCom으로 품질 결과 → Summary 알림 메시지에 포함</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ TROUBLESHOOT ═══════════ -->
+<hr class="divider">
+<section class="section" id="troubleshoot">
+  <div class="section-header">
+    <div class="section-label">🔧 Troubleshooting</div>
+    <h2 class="section-title">트러블슈팅 & 실패 경험</h2>
+    <p class="section-desc">"실패하지 않은 시스템은 없습니다. 중요한 것은 얼마나 빨리 감지하고 복구하느냐입니다."</p>
+  </div>
+
+  <!-- Case 1 -->
+  <div class="trouble-card">
+    <h4><span class="tag tag-red" style="margin-right:8px">Case 1</span> 중복 결제 이벤트로 매출 2배 집계</h4>
+    <div class="situation">
+      <strong>상황:</strong> 클라이언트 SDK 버그로 <code>payment.complete</code> 이벤트가 2회 발송되어 일 매출이 실제의 약 2배로 집계됨. PM이 보고서를 경영진에 전달한 뒤 발견.
+    </div>
+    <div class="code-block" style="margin:12px 0">
+      <div class="code-header"><span class="lang">🔍 원인 분석</span></div>
+      <pre><code class="language-sql">SELECT transaction_id, COUNT(*) AS cnt
+FROM staging.events
+WHERE event_name = 'payment.complete.payment_success'
+GROUP BY 1
+HAVING cnt > 1
+-- → 약 30%의 결제가 2회 이상 기록</code></pre>
+    </div>
+    <div class="solution">
+      <strong>해결:</strong>
+      <ol style="margin:8px 0 0 20px;color:var(--text2);font-size:14px">
+        <li><code>stg_transactions.sql</code>에 <code>ROW_NUMBER() PARTITION BY transaction_id</code> 추가</li>
+        <li>Great Expectations에 <code>expect_column_values_to_be_unique(transaction_id)</code> 규칙 추가</li>
+        <li>클라이언트 SDK에 idempotency key 도입 요청</li>
+      </ol>
+    </div>
+    <div class="lesson">💡 <strong>교훈:</strong> 수집 단계의 중복은 변환 단계에서 반드시 제거해야 하며, 이를 자동 감지하는 품질 규칙이 사전에 존재해야 함.</div>
+  </div>
+
+  <!-- Case 2 -->
+  <div class="trouble-card">
+    <h4><span class="tag tag-yellow" style="margin-right:8px">Case 2</span> 택소노미 미준수로 퍼널 분석 누락</h4>
+    <div class="situation">
+      <strong>상황:</strong> 신규 기능 배포 시 <code>paymentView</code> (camelCase)로 이벤트를 보내, 결제 퍼널의 Step 1이 30% 급감한 것처럼 보임.
+    </div>
+    <div class="solution">
+      <strong>해결:</strong>
+      <ol style="margin:8px 0 0 20px;color:var(--text2);font-size:14px">
+        <li><code>event_name</code> regex 검증을 P0 규칙으로 승격</li>
+        <li>개발자 가이드에 "공통 실수 목록" 추가</li>
+        <li>CI/CD 파이프라인에 스키마 검증 단계 추가</li>
+      </ol>
+    </div>
+    <div class="lesson">💡 <strong>교훈:</strong> 네이밍 규칙은 문서만으로는 강제할 수 없다. 검증 자동화가 반드시 필요.</div>
+  </div>
+
+  <!-- Case 3 -->
+  <div class="trouble-card">
+    <h4><span class="tag tag-yellow" style="margin-right:8px">Case 3</span> 환불 미반영으로 ARPPU 과대 산출</h4>
+    <div class="situation">
+      <strong>상황:</strong> ARPPU 산출 시 환불 건을 차감하지 않아 실제보다 15% 높게 산출.
+    </div>
+    <div class="solution">
+      <strong>해결:</strong>
+      <ol style="margin:8px 0 0 20px;color:var(--text2);font-size:14px">
+        <li><code>mart_revenue.sql</code>에 refund LEFT JOIN 추가</li>
+        <li><code>assert_arppu_reasonable</code> dbt 테스트로 Z-score 이상치 자동 감지</li>
+      </ol>
+    </div>
+    <div class="lesson">💡 <strong>교훈:</strong> 금융 지표는 "빼야 할 것"을 놓치기 쉽다. 통계적 이상치 탐지가 안전장치 역할.</div>
+  </div>
+</section>
+
+
+
+</main>
+<!-- ═══════════ CHARTS ═══════════ -->
+<script>
+const B='#3B82F6',P='#8B5CF6',K='#EC4899',G='#22C55E',Y='#F59E0B',GY='#6B7280',GR='#3F3F46',TX='#A1A1AA';
+Chart.defaults.color=TX;Chart.defaults.borderColor=GR;
+Chart.defaults.font.family="'Inter',system-ui,sans-serif";
+Chart.defaults.plugins.legend.labels.usePointStyle=true;
+Chart.defaults.plugins.legend.labels.pointStyleWidth=8;
+const d14=['12/02','12/03','12/04','12/05','12/06','12/07','12/08','12/09','12/10','12/11','12/12','12/13','12/14','12/15'];
+
+// Revenue
+new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels:d14,datasets:[
+{label:'Net Revenue (억원)',data:[41.2,43.8,39.5,44.1,46.3,52.8,48.2,42.1,45.6,47.3,44.8,46.2,48.5,48.0],backgroundColor:B+'80',borderColor:B,borderWidth:1,borderRadius:4,order:2},
+{label:'7일 이동평균',data:[null,null,null,null,null,null,45.1,45.3,45.5,46.1,46.7,46.4,46.2,46.1],type:'line',borderColor:Y,borderWidth:2,pointRadius:0,tension:.4,order:1}
+]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:false,grid:{color:GR}},x:{grid:{display:false}}}}});
+
+// DAU
+new Chart(document.getElementById('dauChart'),{type:'line',data:{labels:d14,datasets:[
+{label:'DAU (만명)',data:[112,118,115,121,119,132,128,114,120,122,118,121,124,124],borderColor:B,backgroundColor:B+'20',fill:true,tension:.4,pointRadius:3},
+{label:'WAU (만명)',data:[380,385,388,392,396,405,412,408,401,398,402,406,410,412],borderColor:P,borderDash:[5,5],tension:.4,pointRadius:0},
+{label:'MAU (만명)',data:[890,892,895,898,901,908,912,915,918,920,922,924,926,928],borderColor:GY,borderDash:[2,2],tension:.4,pointRadius:0}
+]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid:{color:GR}},x:{grid:{display:false}}}}});
+
+// Retention
+new Chart(document.getElementById('retentionChart'),{type:'line',data:{labels:['D0','D1','D3','D7','D14','D30'],datasets:[
+{label:'Dec W2',data:[100,68,55,42.3,31.5,null],borderColor:B,backgroundColor:B+'20',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:B},
+{label:'Dec W1',data:[100,65,52,39.8,29.1,21.3],borderColor:P,borderDash:[5,5],tension:.3,pointRadius:4},
+{label:'Nov W4',data:[100,63,50,38.2,27.6,19.8],borderColor:GY,borderDash:[2,2],tension:.3,pointRadius:3}
+]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:110,ticks:{callback:v=>v+'%'},grid:{color:GR}},x:{grid:{display:false}}}}});
+
+// Payment Method
+new Chart(document.getElementById('paymentChart'),{type:'doughnut',data:{labels:['QuickPay 잔액','신용카드','체크카드','계좌이체','가상계좌'],datasets:[{data:[42,28,15,10,5],backgroundColor:[B,P,K,G,GY],borderColor:'#18181B',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{padding:16}}}}});
+
+// Volume
+const hrs=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
+const norm=[12,8,5,3,4,15,45,82,95,88,76,85,92,87,78,72,85,94,98,88,72,55,38,22];
+const act=[11,7,5,3,4,14,43,80,93,86,74,83,90,85,76,70,83,92,96,86,70,53,36,21];
+new Chart(document.getElementById('volumeChart'),{type:'line',data:{labels:hrs,datasets:[
+{label:'실제 볼륨 (만건)',data:act,borderColor:B,fill:false,tension:.4,pointRadius:3,borderWidth:2},
+{label:'상한',data:norm.map(v=>Math.round(v*1.3)),borderColor:G+'40',borderDash:[4,4],fill:false,tension:.4,pointRadius:0,borderWidth:1},
+{label:'하한',data:norm.map(v=>Math.round(v*0.7)),borderColor:G+'40',borderDash:[4,4],fill:'-1',backgroundColor:G+'08',tension:.4,pointRadius:0,borderWidth:1}
+]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:GR}},x:{grid:{display:false}}}}});
+
+// Hide inactive chart tabs after Chart.js renders
+document.querySelectorAll('.chart-tab-panel:not(.active)').forEach(p=>p.style.display='none');
+document.querySelectorAll('.chart-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.chart-tab-panel').forEach(p=>{p.classList.remove('active');p.style.display='none'});
+    btn.classList.add('active');
+    const el=document.getElementById(btn.dataset.tab);
+    el.classList.add('active');
+    el.style.display='block';
+  });
+});
+
+// Highlight.js
+hljs.highlightAll();
+
+// Nav active state
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(scrollY>=s.offsetTop-120)cur=s.id});
+  navLinks.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur)});
+});
+</script>
+</body>
+</html>

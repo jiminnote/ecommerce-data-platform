@@ -1,0 +1,108 @@
+{
+  "expectation_suite_name": "quickpay_transactions_suite",
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "created_by": "QuickPay DataOps Team",
+    "description": "QuickPay 결제/송금 트랜잭션 데이터 품질 규칙 — 금융 데이터 정합성"
+  },
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "transaction_id"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "completeness",
+        "description": "결제 ID 없으면 정산 불가"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "transaction_id"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "uniqueness",
+        "description": "중복 결제 감지 — 정산 오류 방지"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "amount",
+        "min_value": 0,
+        "strict_min": true
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "accuracy",
+        "description": "결제 금액은 반드시 양수"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "status",
+        "value_set": ["COMPLETED", "REFUNDED", "FAILED", "PENDING", "CANCELLED"]
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "validity",
+        "description": "결제 상태 값 제한"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "payment_method",
+        "value_set": ["card", "quickpay_balance", "bank_transfer", "virtual_account"]
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "validity",
+        "description": "허용된 결제 수단만 존재"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": {
+        "column": "transaction_id",
+        "regex": "^TXN-[A-Z0-9]{8,}$"
+      },
+      "meta": {
+        "priority": "P1",
+        "category": "format",
+        "description": "트랜잭션 ID 포맷: TXN-XXXXXXXX"
+      }
+    },
+    {
+      "expectation_type": "expect_column_mean_to_be_between",
+      "kwargs": {
+        "column": "amount",
+        "min_value": 1000,
+        "max_value": 500000
+      },
+      "meta": {
+        "priority": "P1",
+        "category": "distribution",
+        "description": "평균 결제 금액 이상치 감지 (1천원~50만원 정상)"
+      }
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "user_id",
+        "min_value": 0.001,
+        "max_value": 1.0
+      },
+      "meta": {
+        "priority": "P2",
+        "category": "distribution",
+        "description": "단일 유저에게 모든 결제가 몰리는 이상 패턴 감지"
+      }
+    }
+  ]
+}

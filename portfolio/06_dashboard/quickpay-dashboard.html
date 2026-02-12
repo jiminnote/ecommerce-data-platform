@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickPay DataOps Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif; background: #0F1117; color: #E8EAED; }
+
+  .dashboard { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2D2F36; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #FFFFFF; }
+  .header h1 span { color: #3B82F6; }
+  .header .date { font-size: 13px; color: #9CA3AF; }
+  .header .status { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .header .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; }
+  .header .status .dot.warn { background: #F59E0B; }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: #1A1C23; border-radius: 12px; padding: 20px; border: 1px solid #2D2F36; }
+  .kpi-card .label { font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; color: #FFFFFF; }
+  .kpi-card .change { font-size: 12px; margin-top: 6px; }
+  .kpi-card .change.up { color: #22C55E; }
+  .kpi-card .change.down { color: #EF4444; }
+
+  /* Chart Grid */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: #1A1C23; border-radius: 12px; padding: 20px; border: 1px solid #2D2F36; }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card h3 { font-size: 14px; font-weight: 600; color: #E8EAED; margin-bottom: 16px; }
+  .chart-card h3 .badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #3B82F620; color: #60A5FA; margin-left: 8px; vertical-align: middle; }
+  .chart-container { position: relative; height: 280px; }
+  .chart-container.tall { height: 320px; }
+
+  /* Data Quality Panel */
+  .quality-panel { background: #1A1C23; border-radius: 12px; padding: 20px; border: 1px solid #2D2F36; margin-bottom: 24px; }
+  .quality-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+  .quality-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .quality-item { background: #0F1117; border-radius: 8px; padding: 14px; text-align: center; }
+  .quality-item .q-label { font-size: 11px; color: #9CA3AF; margin-bottom: 6px; }
+  .quality-item .q-value { font-size: 22px; font-weight: 700; }
+  .quality-item .q-value.good { color: #22C55E; }
+  .quality-item .q-value.warn { color: #F59E0B; }
+  .quality-item .q-value.bad { color: #EF4444; }
+  .quality-item .q-bar { height: 4px; background: #2D2F36; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .quality-item .q-bar .q-fill { height: 100%; border-radius: 2px; }
+
+  /* Funnel */
+  .funnel-row { display: flex; align-items: center; gap: 4px; margin-bottom: 24px; }
+  .funnel-step { flex: 1; text-align: center; padding: 16px 8px; border-radius: 8px; position: relative; }
+  .funnel-step .f-label { font-size: 11px; color: #9CA3AF; margin-bottom: 4px; }
+  .funnel-step .f-value { font-size: 20px; font-weight: 700; color: #FFFFFF; }
+  .funnel-step .f-pct { font-size: 11px; color: #60A5FA; margin-top: 2px; }
+  .funnel-arrow { color: #4B5563; font-size: 18px; flex-shrink: 0; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 16px; font-size: 11px; color: #6B7280; border-top: 1px solid #2D2F36; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1><span>QuickPay</span> DataOps Dashboard</h1>
+      <div class="date">2024-12-15 (Sun) · Last updated 02:15 KST</div>
+    </div>
+    <div class="status">
+      <div class="dot"></div> Pipeline Healthy
+      <span style="margin-left:16px; color:#6B7280">|</span>
+      <span style="margin-left:16px">Quality Score: <strong style="color:#22C55E">98.7%</strong></span>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="label">DAU</div>
+      <div class="value">1.24M</div>
+      <div class="change up">▲ 3.2% vs yesterday</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Net Revenue</div>
+      <div class="value">₩4.8B</div>
+      <div class="change up">▲ 7.1% vs yesterday</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">ARPPU</div>
+      <div class="value">₩12,400</div>
+      <div class="change down">▼ 1.3% vs yesterday</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Payment CVR</div>
+      <div class="value">68.4%</div>
+      <div class="change up">▲ 2.1% vs yesterday</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">D7 Retention</div>
+      <div class="value">42.3%</div>
+      <div class="change up">▲ 0.8% vs last week</div>
+    </div>
+  </div>
+
+  <!-- Payment Funnel -->
+  <div class="chart-card full" style="margin-bottom: 24px;">
+    <h3>💳 결제 퍼널 전환율 <span class="badge">REAL-TIME</span></h3>
+    <div class="funnel-row">
+      <div class="funnel-step" style="background: #3B82F620;">
+        <div class="f-label">결제 화면 진입</div>
+        <div class="f-value">524,300</div>
+        <div class="f-pct">100%</div>
+      </div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background: #8B5CF620;">
+        <div class="f-label">결제 수단 선택</div>
+        <div class="f-value">418,200</div>
+        <div class="f-pct">79.8%</div>
+      </div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background: #EC489920;">
+        <div class="f-label">결제 요청</div>
+        <div class="f-value">387,600</div>
+        <div class="f-pct">73.9%</div>
+      </div>
+      <div class="funnel-arrow">→</div>
+      <div class="funnel-step" style="background: #22C55E20;">
+        <div class="f-label">결제 완료</div>
+        <div class="f-value">358,500</div>
+        <div class="f-pct">68.4%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>📈 일별 매출 추이 (Net Revenue) <span class="badge">7D MA</span></h3>
+      <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>👥 DAU / WAU / MAU 추이</h3>
+      <div class="chart-container"><canvas id="dauChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>🔄 코호트 리텐션 (Week of Dec 8)</h3>
+      <div class="chart-container"><canvas id="retentionChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>💰 결제 수단 비중</h3>
+      <div class="chart-container"><canvas id="paymentMethodChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Data Quality Panel -->
+  <div class="quality-panel">
+    <h3>🛡️ 데이터 품질 모니터링 <span class="badge" style="font-size:10px; padding:2px 8px; border-radius:4px; background:#22C55E20; color:#22C55E; margin-left:8px;">ALL PASS</span></h3>
+    <div class="quality-grid">
+      <div class="quality-item">
+        <div class="q-label">Completeness</div>
+        <div class="q-value good">99.8%</div>
+        <div class="q-bar"><div class="q-fill" style="width:99.8%; background:#22C55E;"></div></div>
+      </div>
+      <div class="quality-item">
+        <div class="q-label">Uniqueness</div>
+        <div class="q-value good">100%</div>
+        <div class="q-bar"><div class="q-fill" style="width:100%; background:#22C55E;"></div></div>
+      </div>
+      <div class="quality-item">
+        <div class="q-label">Consistency</div>
+        <div class="q-value good">99.2%</div>
+        <div class="q-bar"><div class="q-fill" style="width:99.2%; background:#22C55E;"></div></div>
+      </div>
+      <div class="quality-item">
+        <div class="q-label">Freshness</div>
+        <div class="q-value good">< 5min</div>
+        <div class="q-bar"><div class="q-fill" style="width:95%; background:#22C55E;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 3 -->
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <h3>🔍 이벤트 볼륨 & 이상 감지 (24h)</h3>
+      <div class="chart-container tall"><canvas id="volumeChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    QuickPay DataOps Portfolio · Built with dbt + Great Expectations + Airflow · Data refreshed daily at 02:00 KST
+  </div>
+</div>
+
+<script>
+// ─── Color Palette ────────────────────────────
+const BLUE = '#3B82F6';
+const PURPLE = '#8B5CF6';
+const PINK = '#EC4899';
+const GREEN = '#22C55E';
+const YELLOW = '#F59E0B';
+const RED = '#EF4444';
+const GRAY = '#6B7280';
+const GRID = '#2D2F36';
+const TEXT = '#9CA3AF';
+
+Chart.defaults.color = TEXT;
+Chart.defaults.borderColor = GRID;
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif";
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
+
+const dates14 = ['12/02','12/03','12/04','12/05','12/06','12/07','12/08','12/09','12/10','12/11','12/12','12/13','12/14','12/15'];
+
+// ─── Revenue Chart ────────────────────────────
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: dates14,
+    datasets: [
+      {
+        label: 'Net Revenue (억원)',
+        data: [41.2, 43.8, 39.5, 44.1, 46.3, 52.8, 48.2, 42.1, 45.6, 47.3, 44.8, 46.2, 48.5, 48.0],
+        backgroundColor: BLUE + '80',
+        borderColor: BLUE,
+        borderWidth: 1,
+        borderRadius: 4,
+        order: 2,
+      },
+      {
+        label: '7일 이동평균',
+        data: [null, null, null, null, null, null, 45.1, 45.3, 45.5, 46.1, 46.7, 46.4, 46.2, 46.1],
+        type: 'line',
+        borderColor: YELLOW,
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.4,
+        order: 1,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { beginAtZero: false, grid: { color: GRID } }, x: { grid: { display: false } } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+
+// ─── DAU Chart ────────────────────────────────
+new Chart(document.getElementById('dauChart'), {
+  type: 'line',
+  data: {
+    labels: dates14,
+    datasets: [
+      {
+        label: 'DAU (만명)',
+        data: [112, 118, 115, 121, 119, 132, 128, 114, 120, 122, 118, 121, 124, 124],
+        borderColor: BLUE,
+        backgroundColor: BLUE + '20',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+      },
+      {
+        label: 'WAU (만명)',
+        data: [380, 385, 388, 392, 396, 405, 412, 408, 401, 398, 402, 406, 410, 412],
+        borderColor: PURPLE,
+        borderDash: [5,5],
+        tension: 0.4,
+        pointRadius: 0,
+      },
+      {
+        label: 'MAU (만명)',
+        data: [890, 892, 895, 898, 901, 908, 912, 915, 918, 920, 922, 924, 926, 928],
+        borderColor: GRAY,
+        borderDash: [2,2],
+        tension: 0.4,
+        pointRadius: 0,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { grid: { color: GRID } }, x: { grid: { display: false } } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+
+// ─── Retention Chart ──────────────────────────
+new Chart(document.getElementById('retentionChart'), {
+  type: 'line',
+  data: {
+    labels: ['D0','D1','D3','D7','D14','D30'],
+    datasets: [
+      {
+        label: 'Dec W2 Cohort',
+        data: [100, 68, 55, 42.3, 31.5, null],
+        borderColor: BLUE,
+        backgroundColor: BLUE + '20',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: BLUE,
+      },
+      {
+        label: 'Dec W1 Cohort',
+        data: [100, 65, 52, 39.8, 29.1, 21.3],
+        borderColor: PURPLE,
+        borderDash: [5,5],
+        tension: 0.3,
+        pointRadius: 4,
+      },
+      {
+        label: 'Nov W4 Cohort',
+        data: [100, 63, 50, 38.2, 27.6, 19.8],
+        borderColor: GRAY,
+        borderDash: [2,2],
+        tension: 0.3,
+        pointRadius: 3,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: { min: 0, max: 110, ticks: { callback: v => v + '%' }, grid: { color: GRID } },
+      x: { grid: { display: false } }
+    },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+
+// ─── Payment Method Chart ─────────────────────
+new Chart(document.getElementById('paymentMethodChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['QuickPay 잔액', '신용카드', '체크카드', '계좌이체', '가상계좌'],
+    datasets: [{
+      data: [42, 28, 15, 10, 5],
+      backgroundColor: [BLUE, PURPLE, PINK, GREEN, GRAY],
+      borderColor: '#1A1C23',
+      borderWidth: 3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'right', labels: { padding: 16 } },
+    }
+  }
+});
+
+// ─── Volume Anomaly Chart ─────────────────────
+const hours24 = Array.from({length: 24}, (_, i) => `${String(i).padStart(2,'0')}:00`);
+const normalVolume = [12,8,5,3,4,15,45,82,95,88,76,85,92,87,78,72,85,94,98,88,72,55,38,22];
+const actualVolume = [11,7,5,3,4,14,43,80,93,86,74,83,90,85,76,70,83,92,96,86,70,53,36,21];
+const upperBound = normalVolume.map(v => Math.round(v * 1.3));
+const lowerBound = normalVolume.map(v => Math.round(v * 0.7));
+
+new Chart(document.getElementById('volumeChart'), {
+  type: 'line',
+  data: {
+    labels: hours24,
+    datasets: [
+      {
+        label: '실제 볼륨 (만건)',
+        data: actualVolume,
+        borderColor: BLUE,
+        backgroundColor: BLUE + '20',
+        fill: false,
+        tension: 0.4,
+        pointRadius: 3,
+        borderWidth: 2,
+      },
+      {
+        label: '예상 범위 (상한)',
+        data: upperBound,
+        borderColor: GREEN + '40',
+        borderDash: [4,4],
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+        borderWidth: 1,
+      },
+      {
+        label: '예상 범위 (하한)',
+        data: lowerBound,
+        borderColor: GREEN + '40',
+        borderDash: [4,4],
+        fill: '-1',
+        backgroundColor: GREEN + '08',
+        tension: 0.4,
+        pointRadius: 0,
+        borderWidth: 1,
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, grid: { color: GRID } },
+      x: { grid: { display: false } }
+    },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+</body>
+</html>

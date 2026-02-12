@@ -1,0 +1,44 @@
+name: 'quickpay_dataops'
+version: '1.0.0'
+config-version: 2
+
+profile: 'quickpay'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # 분석 기간 기본값
+  lookback_days: 90
+  # 환불 이벤트 포함 여부
+  include_refunds: true
+
+models:
+  quickpay_dataops:
+    # Staging: raw 데이터 정제 (1:1 매핑)
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ['staging']
+
+    # Intermediate: 비즈니스 로직 중간 집계
+    intermediate:
+      +materialized: ephemeral
+      +tags: ['intermediate']
+
+    # Mart: 최종 분석/대시보드용 테이블
+    mart:
+      +materialized: table
+      +schema: mart
+      +tags: ['mart']
+      +post-hook:
+        - "{{ log_model_completion(this) }}"

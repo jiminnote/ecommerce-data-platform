@@ -1,0 +1,132 @@
+{
+  "expectation_suite_name": "quickpay_events_suite",
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "created_by": "QuickPay DataOps Team",
+    "description": "QuickPay 이벤트 로그 데이터 품질 규칙"
+  },
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "event_id"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "completeness",
+        "description": "이벤트 ID는 반드시 존재해야 함"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "user_id"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "completeness",
+        "description": "유저 ID 필수 — 없으면 행동 분석 불가"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "event_timestamp"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "completeness",
+        "description": "타임스탬프 미존재 시 시계열 분석 불가"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": {
+        "column": "event_name",
+        "regex": "^[a-z]+\\.[a-z]+\\.[a-z_]+$"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "consistency",
+        "description": "Category.Action.Label 택소노미 규칙 준수"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "device_type",
+        "value_set": ["ios", "android", "web"]
+      },
+      "meta": {
+        "priority": "P1",
+        "category": "validity",
+        "description": "디바이스 타입은 ios/android/web만 허용"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "properties.amount",
+        "min_value": 0,
+        "max_value": 100000000,
+        "mostly": 0.99
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "accuracy",
+        "description": "결제 금액 음수 불가 / 1억 초과 이상치 감지"
+      }
+    },
+    {
+      "expectation_type": "expect_column_pair_values_a_to_be_greater_than_b",
+      "kwargs": {
+        "column_A": "event_timestamp",
+        "column_B": "user_created_at",
+        "or_equal": true,
+        "mostly": 0.99
+      },
+      "meta": {
+        "priority": "P1",
+        "category": "consistency",
+        "description": "이벤트 시각이 유저 가입일 이후여야 함"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "event_id"
+      },
+      "meta": {
+        "priority": "P0",
+        "category": "uniqueness",
+        "description": "이벤트 ID 중복 시 메트릭 집계 왜곡"
+      }
+    },
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 10000,
+        "max_value": 50000000
+      },
+      "meta": {
+        "priority": "P1",
+        "category": "volume",
+        "description": "일 1만~5천만 이벤트 정상 범위"
+      }
+    },
+    {
+      "expectation_type": "expect_column_proportion_of_unique_values_to_be_between",
+      "kwargs": {
+        "column": "session_id",
+        "min_value": 0.01,
+        "max_value": 1.0
+      },
+      "meta": {
+        "priority": "P2",
+        "category": "distribution",
+        "description": "세션 ID 카디널리티 이상 감지"
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+# QuickPay DataOps - 로컬 개발 환경
+# Usage: docker-compose -f portfolio/docker-compose.yml up -d
+
+version: "3.9"
+
+services:
+  # ─── PostgreSQL (메타데이터 저장소) ────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: quickpay-postgres
+    environment:
+      POSTGRES_DB: quickpay
+      POSTGRES_USER: quickpay
+      POSTGRES_PASSWORD: quickpay_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickpay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── BigQuery Emulator ────────────────────────────────────
+  bigquery-emulator:
+    image: ghcr.io/goccy/bigquery-emulator:latest
+    container_name: quickpay-bigquery
+    ports:
+      - "9050:9050"
+      - "9060:9060"
+    command: >
+      --project=quickpay-data
+      --dataset=analytics
+      --port=9050
+      --grpc-port=9060
+
+  # ─── Apache Airflow ──────────────────────────────────────
+  airflow-webserver:
+    image: apache/airflow:2.8.1-python3.11
+    container_name: quickpay-airflow
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://quickpay:quickpay_dev@postgres:5432/quickpay
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./08_airflow_dags:/opt/airflow/dags
+      - ./04_dbt_mart:/opt/airflow/dbt/quickpay
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@quickpay.io &&
+        airflow webserver
+      "
+
+  # ─── dbt (데이터 변환) ────────────────────────────────────
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-bigquery:1.7.0
+    container_name: quickpay-dbt
+    volumes:
+      - ./04_dbt_mart:/usr/app/dbt
+    working_dir: /usr/app/dbt
+    environment:
+      DBT_PROFILES_DIR: /usr/app/dbt
+    entrypoint: ["tail", "-f", "/dev/null"]  # Keep alive for exec
+
+  # ─── Great Expectations (데이터 품질) ─────────────────────
+  great-expectations:
+    image: python:3.11-slim
+    container_name: quickpay-ge
+    volumes:
+      - ./07_data_quality:/app
+    working_dir: /app
+    command: >
+      bash -c "
+        pip install great-expectations sqlalchemy-bigquery requests &&
+        tail -f /dev/null
+      "
+
+volumes:
+  postgres_data:

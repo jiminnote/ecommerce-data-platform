@@ -1,0 +1,63 @@
+# Great Expectations Configuration
+# QuickPay 데이터 품질 관리
+
+config_version: 3.0
+datasources:
+  quickpay_bigquery:
+    class_name: Datasource
+    module_name: great_expectations.datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      module_name: great_expectations.execution_engine
+      connection_string: bigquery://quickpay-data/analytics
+    data_connectors:
+      default_inferred_data_connector:
+        class_name: InferredAssetSqlDataConnector
+        module_name: great_expectations.datasource.data_connector
+        include_schema_name: true
+
+config_variables_file_path: uncommitted/config_variables.yml
+
+stores:
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleGCSStoreBackend
+      project: quickpay-data
+      bucket: quickpay-ge-store
+      prefix: expectations/
+
+  validations_store:
+    class_name: ValidationsStore
+    store_backend:
+      class_name: TupleGCSStoreBackend
+      project: quickpay-data
+      bucket: quickpay-ge-store
+      prefix: validations/
+
+  evaluation_parameter_store:
+    class_name: EvaluationParameterStore
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleGCSStoreBackend
+      project: quickpay-data
+      bucket: quickpay-ge-store
+      prefix: checkpoints/
+
+expectations_store_name: expectations_store
+validations_store_name: validations_store
+evaluation_parameter_store_name: evaluation_parameter_store
+checkpoint_store_name: checkpoint_store
+
+data_docs_sites:
+  gcs_site:
+    class_name: SiteBuilder
+    store_backend:
+      class_name: TupleGCSStoreBackend
+      project: quickpay-data
+      bucket: quickpay-ge-docs
+      prefix: data_docs/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
